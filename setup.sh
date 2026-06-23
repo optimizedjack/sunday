@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#cURL command is inside of README.md
 set -e
 
 BOLD='\033[1m'

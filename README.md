@@ -1,17 +1,16 @@
-
-Sunday is experimental software currently in active development. It is provided as-is, with no guarantees of stability, security, or fitness for any purpose.
-By installing Sunday, you acknowledge that:
-
-This software may contain bugs or incomplete features
-You should not install this on a machine you rely on
-The author is not liable for any damage or data loss
-This is not production-ready software
-
-
-
 # ☀ Sunday
 
 A personal AI brainstorming assistant. Runs locally on your machine, saves notes to Obsidian, and works as a creative collaborator with a point of view.
+
+## ⚠ Disclaimer
+
+Sunday is experimental software currently in active development. It is provided as-is, with no guarantees of stability, security, or fitness for any purpose.
+
+By installing Sunday, you acknowledge that:
+- This software may contain bugs or incomplete features
+- You should **not** install this on a machine you rely on
+- The author is not liable for any damage or data loss
+- This is not production-ready software
 
 ## What it does
 
@@ -32,28 +31,21 @@ A personal AI brainstorming assistant. Runs locally on your machine, saves notes
 ## Quick start
 
 ```bash
-git clone <this repo>   # or extract the zip
-cd sunday
-./setup.sh
+curl -fsSL https://jaacck.me/sunday/setup.sh | bash
 ```
 
-The setup script will:
-1. Install Node.js via nvm if not present
-2. Install Ollama if not present and pull the default model (`llama3.2`)
-3. Run `npm install`
-4. Create `.env` from `.env.example` and prompt for your Obsidian API key
-5. Optionally register Sunday as a systemd service
+Then open `http://localhost:3000` in your browser.
 
 ## Manual setup
 
 ```bash
+git clone https://github.com/optimizedjack/sunday.git
+cd sunday
 cp .env.example .env
 # edit .env and add your OBSIDIAN_KEY
 npm install
 node server.js
 ```
-
-Then open `http://localhost:3000` in your browser.
 
 ## Configuration
 
@@ -75,7 +67,7 @@ All config lives in `.env`:
 3. In the plugin settings, copy the API key
 4. Paste it into `.env` as `OBSIDIAN_KEY=...`
 
-Note: Obsidian must be running for Sunday to save/load notes.
+> Obsidian must be running for Sunday to save and load notes.
 
 ## Modes
 
@@ -88,7 +80,7 @@ Note: Obsidian must be running for Sunday to save/load notes.
 
 ## Running as a service (Linux)
 
-The setup script can install a systemd service. Manually:
+The setup script can install a systemd service. To manage it manually:
 
 ```bash
 sudo systemctl start sunday
@@ -100,5 +92,9 @@ sudo journalctl -u sunday -f   # live logs
 ## Notes
 
 - Conversations auto-save to Obsidian after every message
-- Canvas layout (card positions and connections) persists in `localStorage`
+- Canvas layout persists in `localStorage`
 - No data leaves your machine — everything runs locally
+
+## License
+
+MIT

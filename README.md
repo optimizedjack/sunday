@@ -1,3 +1,14 @@
+
+Sunday is experimental software currently in active development. It is provided as-is, with no guarantees of stability, security, or fitness for any purpose.
+By installing Sunday, you acknowledge that:
+
+This software may contain bugs or incomplete features
+You should not install this on a machine you rely on
+The author is not liable for any damage or data loss
+This is not production-ready software
+
+
+
 # ☀ Sunday
 
 A personal AI brainstorming assistant. Runs locally on your machine, saves notes to Obsidian, and works as a creative collaborator with a point of view.

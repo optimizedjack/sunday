@@ -1,4 +1,4 @@
-# ☀ Sunday
+# ☀ Sunday - Beta v.0.2 release
 
 A local-first personal AI brainstorming assistant. Runs entirely on your machine, saves notes to Obsidian, and works as a creative collaborator with a point of view.
 

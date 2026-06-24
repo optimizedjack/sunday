@@ -55,28 +55,39 @@
   /* ── Header ── */
   header {
     width:100%;padding:16px 24px;
-    display:flex;align-items:center;justify-content:space-between;
+    display:flex;align-items:center;justify-content:center;
     position:relative;z-index:200;
   }
 
-  .wordmark {
-    display:flex;align-items:center;gap:8px;
-    font-size:15px;font-weight:600;letter-spacing:0.08em;
-    color: var(--yellow);
-    text-transform:lowercase;
-    text-shadow: 0 1px 12px rgba(255,222,89,0.5);
-  }
-  .wordmark img { height:30px;width:auto; }
+  .header-center { display:flex;align-items:center;gap:16px; }
 
-  .header-right { display:flex;align-items:center;gap:8px; }
-
-  .status-pill {
-    display:flex;align-items:center;gap:6px;
-    font-size:11px;color:var(--text-muted);
-    padding:5px 12px;border-radius:20px;
+  /* ── Animated status dot ── */
+  .status-dot {
+    position:relative;
+    margin:0 10px;
+    width:10px;height:10px;
+    border-radius:100px;
+    background:rgba(0,0,0,0.12);
+    flex-shrink:0;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    transition:
+      width  0.55s cubic-bezier(0.34,1.2,0.64,1),
+      height 0.4s  cubic-bezier(0.34,1.2,0.64,1),
+      background 0.35s ease;
   }
-  .status-dot { width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0; }
+  .status-dot.online  { background:var(--green); }
   .status-dot.offline { background:var(--accent); }
+  .status-dot.expanded { width:108px;height:28px; }
+
+  .status-dot-label {
+    position:absolute;
+    font-size:11px;font-weight:500;letter-spacing:0.02em;
+    color:rgba(255,255,255,0.95);
+    white-space:nowrap;pointer-events:none;user-select:none;
+    opacity:0;transform:translateX(8px);
+    transition:opacity 0.16s 0.34s, transform 0.16s 0.34s;
+  }
+  .status-dot.expanded .status-dot-label { opacity:1;transform:translateX(0); }
 
   .gallery-btn {
     width:36px;height:36px;border-radius:12px;
@@ -87,6 +98,94 @@
   }
   .gallery-btn:hover { color:var(--accent); }
   .gallery-btn.active { color:var(--accent); }
+
+  /* ── Model picker ── */
+  .model-picker {
+    position:relative;height:22px;padding:0 8px;border-radius:8px;
+    display:none;align-items:center;gap:4px;
+    cursor:pointer;user-select:none;margin-left:auto;
+    font-size:10px;font-weight:500;color:var(--text-muted);
+    transition:color 0.15s,background 0.15s;
+  }
+  .model-picker:hover { background:rgba(0,0,0,0.05);color:var(--text); }
+  .model-picker.active { background:rgba(255,87,87,0.08);color:var(--accent); }
+  .model-name { max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .model-dropdown {
+    position:absolute;bottom:calc(100% + 6px);right:0;width:260px;
+    max-height:480px;overflow-y:auto;
+    background:rgba(255,255,255,0.97);
+    border:1px solid rgba(255,255,255,0.9);
+    border-radius:14px;padding:6px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.95),0 -4px 24px rgba(0,0,0,0.07),0 8px 32px rgba(0,0,0,0.05);
+    backdrop-filter:blur(32px) saturate(160%);
+    -webkit-backdrop-filter:blur(32px) saturate(160%);
+    display:none;z-index:300;
+  }
+  .model-dropdown::-webkit-scrollbar { display:none; }
+  .model-dropdown.open { display:block; }
+  .model-section-label {
+    font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-muted);padding:6px 10px 3px;
+  }
+  .model-section-divider { height:1px;background:rgba(0,0,0,0.06);margin:4px 2px; }
+  .model-option {
+    padding:8px 10px;border-radius:8px;
+    font-size:12px;color:var(--text);cursor:pointer;
+    transition:background 0.1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .model-option:hover { background:rgba(0,0,0,0.05); }
+  .model-option.active { color:var(--accent);font-weight:500; }
+  .model-pull-row { display:flex;gap:4px;padding:3px 4px; }
+  .model-pull-input {
+    flex:1;background:rgba(0,0,0,0.04);border:1px solid transparent;
+    border-radius:7px;padding:5px 8px;font-size:11px;font-family:var(--font);
+    color:var(--text);outline:none;transition:border-color 0.15s,background 0.15s;
+    min-width:0;
+  }
+  .model-pull-input:focus { border-color:rgba(255,87,87,0.3);background:rgba(255,255,255,0.9); }
+  .model-pull-input::placeholder { color:var(--text-muted);opacity:0.6; }
+  .model-pull-btn {
+    padding:0 10px;border-radius:7px;border:none;flex-shrink:0;
+    background:rgba(255,87,87,0.1);color:var(--accent);
+    font-size:11px;font-family:var(--font);font-weight:500;cursor:pointer;
+    transition:background 0.15s;
+  }
+  .model-pull-btn:hover { background:rgba(255,87,87,0.18); }
+  .model-pull-btn:disabled { opacity:0.4;cursor:default; }
+  .model-browse-toggle {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:6px 10px;border-radius:8px;
+    font-size:11px;color:var(--text-muted);cursor:pointer;
+    transition:background 0.1s,color 0.1s;
+  }
+  .model-browse-toggle:hover { background:rgba(0,0,0,0.04);color:var(--text); }
+  .model-browse-toggle svg { transition:transform 0.2s; }
+  .model-library-item {
+    display:flex;align-items:center;gap:6px;
+    padding:7px 8px;border-radius:8px;
+    transition:background 0.1s;
+  }
+  .model-library-item:hover { background:rgba(0,0,0,0.04); }
+  .model-library-item.pulling { opacity:0.5;pointer-events:none; }
+  .model-library-info { flex:1;min-width:0; }
+  .model-library-name { font-size:12px;font-weight:500;color:var(--text); }
+  .model-library-desc { font-size:10px;color:var(--text-muted);margin-top:1px; }
+  .model-library-size { font-size:10px;color:var(--text-muted);flex-shrink:0;white-space:nowrap; }
+  .model-library-pull-btn {
+    width:22px;height:22px;border-radius:6px;border:none;flex-shrink:0;
+    background:rgba(255,87,87,0.08);color:var(--accent);
+    font-size:13px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background 0.15s;
+  }
+  .model-library-pull-btn:hover { background:rgba(255,87,87,0.16); }
+  .model-library-pull-btn:disabled { opacity:0.35;cursor:default;color:var(--green); }
+  .model-pull-progress {
+    padding:8px 10px 4px;border-top:1px solid rgba(0,0,0,0.05);margin-top:2px;
+  }
+  .model-pull-status { font-size:11px;color:var(--text-muted);margin-bottom:5px; }
+  .model-pull-bar { height:3px;background:rgba(0,0,0,0.06);border-radius:2px;overflow:hidden; }
+  .model-pull-bar-fill { height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s ease;width:0%; }
 
   /* ── Gallery overlay (3D carousel) ── */
   .gallery-overlay {
@@ -343,7 +442,7 @@
   }
 
   /* ── Chat area ── */
-  .chat-area { flex:1;min-height:0;width:100%;max-width:720px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 24px 140px; }
+  .chat-area { flex:1;min-height:0;width:100%;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 max(24px, 6%) 160px; }
   .chat-area::-webkit-scrollbar { display:none; }
 
   /* ── Welcome ── */
@@ -439,12 +538,30 @@
   }
   .mode-pill:hover { background:rgba(0,0,0,0.05);color:var(--text); }
   .mode-pill.active { background:rgba(255,87,87,0.1);color:var(--accent); }
+  .mode-pill.skill.active { background:rgba(255,222,89,0.18);color:rgba(180,140,0,0.9); }
+  .mode-divider { width:1px;height:14px;background:rgba(0,0,0,0.08);margin:0 2px;flex-shrink:0; }
   .input-bar { display:flex;align-items:flex-end;gap:8px;padding:0 6px 6px; }
 
+  /* ── History search ── */
+  .history-search { padding:8px 12px 4px;flex-shrink:0; }
+  .history-search-input {
+    width:100%;background:rgba(0,0,0,0.04);
+    border:1px solid transparent;border-radius:10px;
+    padding:7px 12px;font-size:13px;font-family:var(--font);
+    color:var(--text);outline:none;
+    transition:border-color 0.15s,background 0.15s;
+  }
+  .history-search-input:focus { background:rgba(255,255,255,0.8);border-color:rgba(255,87,87,0.3); }
+  .history-search-input::placeholder { color:var(--text-muted);opacity:0.6; }
+  .history-item-snippet {
+    font-size:11px;color:var(--text-muted);line-height:1.4;margin-top:2px;
+    overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  }
+
   /* ── Input bar ── */
-  .input-wrap { position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;padding:16px 24px 28px;pointer-events:none; }
+  .input-wrap { position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;padding:16px max(16px, 5%) 28px;pointer-events:none; }
   .input-card {
-    width:100%;max-width:720px;
+    width:100%;max-width:none;
     background:rgba(255,255,255,0.72);
     border:1px solid rgba(255,255,255,0.85);
     border-radius:22px;
@@ -473,6 +590,7 @@
   .send-btn:disabled { opacity:0.3;cursor:default; }
 </style>
 <script src="/marked.min.js"></script>
+<script src="/purify.min.js"></script>
 </head>
 <body>
 
@@ -489,6 +607,9 @@
   <div class="history-header">
     <span class="history-header-title">History</span>
     <button class="history-close" onclick="toggleHistory()">✕</button>
+  </div>
+  <div class="history-search">
+    <input class="history-search-input" id="historySearchInput" type="text" placeholder="Search notes…" oninput="handleHistorySearch(this.value)" autocomplete="off">
   </div>
   <div class="history-list" id="historyList">
     <div class="history-empty">No sessions yet</div>
@@ -544,9 +665,7 @@
 
 <div class="app">
   <header>
-    <div class="wordmark"><img src="logo.png" alt="Sunday logo">sunday</div>
-    <div class="header-right">
-      <!-- History -->
+    <div class="header-center">
       <button class="gallery-btn glass" id="historyBtn" onclick="toggleHistory()" title="Chat history">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/>
@@ -564,6 +683,10 @@
           <line x1="12.2" y1="4.8" x2="8.7" y2="11.3" stroke="currentColor" stroke-width="1.2"/>
         </svg>
       </button>
+      <!-- Status dot — sits between the two button pairs -->
+      <div class="status-dot" id="statusDot">
+        <span class="status-dot-label" id="statusText"></span>
+      </div>
       <!-- Gallery -->
       <button class="gallery-btn glass" id="galleryBtn" onclick="toggleGallery()" title="Notes gallery">
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -578,10 +701,7 @@
           <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
       </button>
-      <div class="status-pill glass">
-        <div class="status-dot" id="statusDot"></div>
-        <span id="statusText">Connecting…</span>
-      </div>
+      <!-- Status dot — fixed to top-center, expands on connect -->
     </div>
   </header>
 
@@ -614,6 +734,11 @@
         <button class="mode-pill" data-mode="riff" onclick="setMode('riff')">riff</button>
         <button class="mode-pill" data-mode="stuck" onclick="setMode('stuck')">stuck</button>
         <button class="mode-pill" data-mode="critique" onclick="setMode('critique')">critique</button>
+        <div class="model-picker" id="modelPicker" onclick="toggleModelPicker()">
+          <span class="model-name" id="modelName">model</span>
+          <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div class="model-dropdown" id="modelDropdown"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -626,10 +751,282 @@
   let conversationHistory = []
   let sessionFilename = null
   let currentMode = 'free'
+  let currentSkillPrompt = ''  // set when a skill pill is active
+  let currentModel = ''        // empty = server default; populated after loadModels()
+  let pastContext = ''
 
-  function setMode(mode) {
+  // DOMPurify is downloaded by setup.sh alongside marked.min.js.
+  // If it somehow failed to load, fall back to stripping script tags rather than crashing.
+  function safeHtml(markdown) {
+    const html = marked.parse(markdown)
+    if (typeof DOMPurify !== 'undefined') return DOMPurify.sanitize(html)
+    console.warn('DOMPurify not loaded — using fallback sanitizer. Run setup.sh to fix this.')
+    return html.replace(/<script[\s\S]*?<\/script>/gi, '')
+               .replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '')
+  }
+
+  async function loadPastContext() {
+    try {
+      const res = await fetch(`${API}/context`)
+      const data = await res.json()
+      pastContext = data.context || ''
+    } catch {
+      pastContext = ''
+    }
+  }
+  loadPastContext()
+
+  function setMode(mode, skillPrompt = '') {
     currentMode = mode
+    currentSkillPrompt = skillPrompt
     document.querySelectorAll('.mode-pill').forEach(p => p.classList.toggle('active', p.dataset.mode === mode))
+  }
+
+  // ── Model switching ──────────────────────────────────────
+  let libraryModels = []
+
+  async function loadModels() {
+    try {
+      const res = await fetch(`${API}/models`)
+      const data = await res.json()
+      renderModelPicker(data.models || [])
+    } catch {}
+  }
+
+  async function loadLibrary() {
+    try {
+      const res  = await fetch(`${API}/library`)
+      const data = await res.json()
+      libraryModels = data.models || []
+    } catch {}
+  }
+
+  function renderModelPicker(installed) {
+    const picker   = document.getElementById('modelPicker')
+    const nameEl   = document.getElementById('modelName')
+    const dropdown = document.getElementById('modelDropdown')
+    const wasOpen  = dropdown.classList.contains('open')
+
+    if (!currentModel && installed.length) currentModel = installed[0]
+    if (currentModel) nameEl.textContent = currentModel.replace(/:latest$/, '')
+
+    dropdown.innerHTML = ''
+
+    // ── Installed ──
+    if (installed.length) {
+      const lbl = document.createElement('div'); lbl.className = 'model-section-label'; lbl.textContent = 'Installed'
+      dropdown.appendChild(lbl)
+      installed.forEach(m => {
+        const opt = document.createElement('div')
+        opt.className = 'model-option' + (m === currentModel ? ' active' : '')
+        opt.textContent = m
+        opt.addEventListener('click', e => {
+          e.stopPropagation()
+          currentModel = m
+          nameEl.textContent = m.replace(/:latest$/, '')
+          dropdown.querySelectorAll('.model-option').forEach(o => o.classList.toggle('active', o.textContent === m))
+          dropdown.classList.remove('open'); picker.classList.remove('active')
+        })
+        dropdown.appendChild(opt)
+      })
+    }
+
+    // ── Pull by name ──
+    const div1 = document.createElement('div'); div1.className = 'model-section-divider'; dropdown.appendChild(div1)
+    const pullLbl = document.createElement('div'); pullLbl.className = 'model-section-label'; pullLbl.textContent = 'Pull a model'
+    dropdown.appendChild(pullLbl)
+    const pullRow   = document.createElement('div'); pullRow.className = 'model-pull-row'
+    const pullInput = document.createElement('input')
+    pullInput.className = 'model-pull-input'; pullInput.placeholder = 'name or name:tag'
+    pullInput.addEventListener('click', e => e.stopPropagation())
+    pullInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pullModel(pullInput.value.trim(), null, pullInput) } })
+    const pullBtn = document.createElement('button'); pullBtn.className = 'model-pull-btn'; pullBtn.textContent = 'Pull'
+    pullBtn.addEventListener('click', e => { e.stopPropagation(); pullModel(pullInput.value.trim(), null, pullInput) })
+    pullRow.appendChild(pullInput); pullRow.appendChild(pullBtn); dropdown.appendChild(pullRow)
+
+    // ── Browse popular ──
+    if (libraryModels.length) {
+      const div2 = document.createElement('div'); div2.className = 'model-section-divider'; dropdown.appendChild(div2)
+      const installedSet = new Set(installed.flatMap(m => [m, m.replace(/:latest$/, '')]))
+
+      let browseOpen = false
+      const browseToggle = document.createElement('div'); browseToggle.className = 'model-browse-toggle'
+      browseToggle.innerHTML = `<span>Browse popular</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      const libraryEl = document.createElement('div'); libraryEl.className = 'model-library'; libraryEl.style.display = 'none'
+
+      browseToggle.addEventListener('click', e => {
+        e.stopPropagation()
+        browseOpen = !browseOpen
+        libraryEl.style.display = browseOpen ? 'block' : 'none'
+        browseToggle.querySelector('svg').style.transform = browseOpen ? 'rotate(180deg)' : ''
+      })
+      dropdown.appendChild(browseToggle)
+
+      libraryModels.forEach(model => {
+        const isInstalled = installedSet.has(model.name)
+        const item = document.createElement('div'); item.className = 'model-library-item'
+        item.innerHTML = `
+          <div class="model-library-info">
+            <div class="model-library-name">${model.name}</div>
+            <div class="model-library-desc">${model.description}</div>
+          </div>
+          <div class="model-library-size">${model.size}</div>
+          <button class="model-library-pull-btn" title="${isInstalled ? 'Installed' : 'Pull'}" ${isInstalled ? 'disabled' : ''}>${isInstalled ? '✓' : '↓'}</button>
+        `
+        if (!isInstalled) {
+          item.querySelector('.model-library-pull-btn').addEventListener('click', e => {
+            e.stopPropagation(); pullModel(model.name, item)
+          })
+        }
+        libraryEl.appendChild(item)
+      })
+      dropdown.appendChild(libraryEl)
+    }
+
+    // ── Progress ──
+    const prog = document.createElement('div'); prog.className = 'model-pull-progress'; prog.id = 'pullProgress'; prog.style.display = 'none'
+    prog.innerHTML = `<div class="model-pull-status" id="pullStatus"></div><div class="model-pull-bar"><div class="model-pull-bar-fill" id="pullBarFill"></div></div>`
+    dropdown.appendChild(prog)
+
+    picker.style.display = 'flex'
+    if (wasOpen) dropdown.classList.add('open')
+  }
+
+  async function pullModel(name, itemEl, inputEl) {
+    if (!name) return
+    const progressEl = document.getElementById('pullProgress')
+    const statusEl   = document.getElementById('pullStatus')
+    const barFill    = document.getElementById('pullBarFill')
+    if (!progressEl || !statusEl || !barFill) return
+
+    progressEl.style.display = 'block'
+    statusEl.textContent = `Pulling ${name}…`
+    barFill.style.width = '0%'
+    if (itemEl) itemEl.classList.add('pulling')
+    if (inputEl) inputEl.disabled = true
+
+    try {
+      const res = await fetch(`${API}/pull`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      })
+      const reader = res.body.getReader(); const decoder = new TextDecoder()
+      while (true) {
+        const { done, value } = await reader.read(); if (done) break
+        const lines = decoder.decode(value).split('\n').filter(l => l.startsWith('data: '))
+        for (const line of lines) {
+          const raw = line.slice(6); if (raw === '[DONE]') break
+          try {
+            const json = JSON.parse(raw)
+            if (json.error) { statusEl.textContent = `Error: ${json.error}`; return }
+            if (json.total && json.completed) {
+              const pct = Math.round((json.completed / json.total) * 100)
+              barFill.style.width = pct + '%'
+              statusEl.textContent = `${json.status} — ${pct}%`
+            } else if (json.status) {
+              statusEl.textContent = json.status
+            }
+            if (json.status === 'success') {
+              barFill.style.width = '100%'
+              statusEl.textContent = `${name} ready ✓`
+              if (itemEl) {
+                const btn = itemEl.querySelector('.model-library-pull-btn')
+                if (btn) { btn.textContent = '✓'; btn.disabled = true }
+              }
+              setTimeout(async () => {
+                await loadModels()
+                const prog = document.getElementById('pullProgress')
+                if (prog) prog.style.display = 'none'
+              }, 1200)
+            }
+          } catch {}
+        }
+      }
+    } catch {
+      if (statusEl) statusEl.textContent = 'Pull failed — is Ollama running?'
+    } finally {
+      if (inputEl) { inputEl.disabled = false; inputEl.value = '' }
+      if (itemEl) itemEl.classList.remove('pulling')
+    }
+  }
+
+  function toggleModelPicker() {
+    const picker   = document.getElementById('modelPicker')
+    const dropdown = document.getElementById('modelDropdown')
+    const open = dropdown.classList.toggle('open')
+    picker.classList.toggle('active', open)
+  }
+
+  document.addEventListener('click', e => {
+    const picker = document.getElementById('modelPicker')
+    if (picker && !picker.contains(e.target)) {
+      document.getElementById('modelDropdown')?.classList.remove('open')
+      picker?.classList.remove('active')
+    }
+  })
+
+  loadLibrary().then(loadModels)
+
+  // ── Skills ───────────────────────────────────────────────
+  async function loadSkills() {
+    try {
+      const res  = await fetch(`${API}/skills`)
+      const data = await res.json()
+      renderSkillPills(data.skills || [])
+    } catch {}
+  }
+
+  function renderSkillPills(skills) {
+    if (!skills.length) return
+    const modeRow = document.querySelector('.mode-row')
+    const div = document.createElement('div'); div.className = 'mode-divider'
+    modeRow.appendChild(div)
+    skills.forEach(skill => {
+      const btn = document.createElement('button')
+      btn.className = 'mode-pill skill'
+      btn.dataset.mode = skill.name
+      btn.title = skill.description || ''
+      btn.textContent = skill.name.toLowerCase()
+      btn.addEventListener('click', () => setMode(skill.name, skill.prompt))
+      modeRow.appendChild(btn)
+    })
+  }
+
+  loadSkills()
+
+  // ── Full-text search ─────────────────────────────────────
+  let searchTimeout = null
+
+  function handleHistorySearch(q) {
+    clearTimeout(searchTimeout)
+    if (!q.trim()) { loadHistory(); return }
+    searchTimeout = setTimeout(async () => {
+      const list = document.getElementById('historyList')
+      list.innerHTML = '<div class="history-empty" style="opacity:0.5">Searching…</div>'
+      try {
+        const res  = await fetch(`${API}/search?q=${encodeURIComponent(q.trim())}`)
+        const data = await res.json()
+        renderSearchResults(data.results || [])
+      } catch {
+        list.innerHTML = '<div class="history-empty">Search failed</div>'
+      }
+    }, 300)
+  }
+
+  function renderSearchResults(results) {
+    const list = document.getElementById('historyList')
+    if (!results.length) { list.innerHTML = '<div class="history-empty">No results</div>'; return }
+    list.innerHTML = ''
+    results.forEach(({ filename, title, date, snippet }) => {
+      const item = document.createElement('div')
+      item.className = 'history-item'
+      const dateEl = document.createElement('div'); dateEl.className = 'history-item-date'; dateEl.textContent = date
+      const titleEl = document.createElement('div'); titleEl.className = 'history-item-title'; titleEl.textContent = title
+      const snipEl = document.createElement('div'); snipEl.className = 'history-item-snippet'; snipEl.textContent = snippet
+      item.appendChild(dateEl); item.appendChild(titleEl); item.appendChild(snipEl)
+      item.addEventListener('click', () => loadSession(filename))
+      list.appendChild(item)
+    })
   }
 
   const hour = new Date().getHours()
@@ -701,7 +1098,13 @@
     historyOpen = !historyOpen
     document.getElementById('historyPanel').classList.toggle('open', historyOpen)
     document.getElementById('historyBtn').classList.toggle('active', historyOpen)
-    if (historyOpen) loadHistory()
+    if (historyOpen) {
+      loadHistory()
+      const searchInput = document.getElementById('historySearchInput')
+      if (searchInput) { searchInput.value = ''; }
+    } else {
+      clearTimeout(searchTimeout)
+    }
     // Close others
     if (historyOpen) {
       galleryOpen = false
@@ -1261,36 +1664,63 @@
   // ─────────────────────────────────────────────
   // Chat
   // ─────────────────────────────────────────────
+  let abortController = null
+
+  function setGenerating(on) {
+    const btn = document.getElementById('sendBtn')
+    if (on) {
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1.5" y="1.5" width="10" height="10" rx="2.5" fill="white"/></svg>`
+      btn.onclick = stopGeneration
+      btn.disabled = false
+    } else {
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13V3M3 8l5-5 5 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      btn.onclick = sendPrompt
+      btn.disabled = false
+    }
+  }
+
+  function stopGeneration() {
+    if (abortController) abortController.abort()
+  }
+
   async function sendPrompt() {
     const input = document.getElementById('promptInput')
     const prompt = input.value.trim()
     if (!prompt) return
-    lastPrompt = prompt; input.value=''; autoResize(input)
+    lastPrompt = prompt; input.value = ''; autoResize(input)
     document.getElementById('welcome')?.remove()
-    document.getElementById('sendBtn').disabled = true
+    setGenerating(true)
     appendMessage('user', prompt)
     const thinking = appendThinking()
+
+    abortController = new AbortController()
+    let streamStarted = false
+    let fullResponse = ''
 
     try {
       const res = await fetch(`${API}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, history: conversationHistory, mode: currentMode })
+        body: JSON.stringify({ prompt, history: conversationHistory, mode: currentMode, context: pastContext, model: currentModel, customPrompt: currentSkillPrompt }),
+        signal: abortController.signal
       })
 
       thinking.remove()
+      streamStarted = true
 
       const container = document.getElementById('messages')
       const wrap = document.createElement('div'); wrap.className = 'message assistant'
       const label = document.createElement('div'); label.className = 'msg-label'
-      label.textContent = currentMode !== 'free' ? `sunday · ${currentMode}` : 'sunday'
+      const modeLabel = currentSkillPrompt
+        ? `sunday · ${currentMode.toLowerCase()}`
+        : (currentMode !== 'free' ? `sunday · ${currentMode}` : 'sunday')
+      label.textContent = modeLabel
       const bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.textContent = ''
       wrap.appendChild(label); wrap.appendChild(bubble)
       container.appendChild(wrap)
 
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
-      let fullResponse = ''
 
       while (true) {
         const { done, value } = await reader.read()
@@ -1304,7 +1734,7 @@
             const json = JSON.parse(data)
             if (json.token) {
               fullResponse += json.token
-              bubble.innerHTML = marked.parse(fullResponse)
+              bubble.innerHTML = safeHtml(fullResponse)
               const chatArea = document.getElementById('chatArea')
               chatArea.scrollTop = chatArea.scrollHeight
             }
@@ -1316,14 +1746,28 @@
       conversationHistory.push({ role: 'user', content: prompt })
       conversationHistory.push({ role: 'assistant', content: fullResponse })
       saveConversation()
+      loadPastContext()
 
-    } catch {
-      thinking.remove()
-      appendMessage('assistant', 'Could not reach Sunday. Is the server running?', false)
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        // User stopped generation — remove thinking if stream hadn't started yet
+        if (!streamStarted) thinking.remove()
+        // Keep whatever was streamed
+        if (fullResponse) {
+          lastResponse = fullResponse
+          conversationHistory.push({ role: 'user', content: prompt })
+          conversationHistory.push({ role: 'assistant', content: fullResponse })
+          saveConversation()
+        }
+      } else {
+        if (!streamStarted) thinking.remove()
+        appendMessage('assistant', 'Could not reach Sunday. Is the server running?', false)
+      }
+    } finally {
+      abortController = null
+      setGenerating(false)
+      input.focus()
     }
-
-    document.getElementById('sendBtn').disabled = false
-    input.focus()
   }
 
   function appendMessage(role, text, showSave=false, scroll=true) {
@@ -1331,7 +1775,7 @@
     const wrap = document.createElement('div'); wrap.className=`message ${role}`
     const label = document.createElement('div'); label.className='msg-label'; label.textContent=role==='user'?'you':'sunday'
     const bubble = document.createElement('div'); bubble.className='bubble'
-    if (role === 'assistant') { bubble.innerHTML = marked.parse(text) } else { bubble.textContent = text }
+    if (role === 'assistant') { bubble.innerHTML = safeHtml(text) } else { bubble.textContent = text }
     wrap.appendChild(label); wrap.appendChild(bubble)
     if (showSave) {
       const row = document.createElement('div'); row.className='save-row'
@@ -1405,8 +1849,20 @@
   window.addEventListener('beforeunload', saveConversation)
 
   async function checkStatus() {
-    try { await fetch(`${API}/notes`); document.getElementById('statusDot').className='status-dot'; document.getElementById('statusText').textContent='Connected' }
-    catch { document.getElementById('statusDot').className='status-dot offline'; document.getElementById('statusText').textContent='Offline' }
+    const dot  = document.getElementById('statusDot')
+    const text = document.getElementById('statusText')
+    try {
+      await fetch(`${API}/notes`)
+      dot.classList.remove('offline'); dot.classList.add('online')
+      text.textContent = 'Connected'
+    } catch {
+      dot.classList.remove('online'); dot.classList.add('offline')
+      text.textContent = 'Offline'
+    }
+    // Expand dot → pill
+    dot.classList.add('expanded')
+    // Collapse back to dot after 2.6s
+    setTimeout(() => dot.classList.remove('expanded'), 2600)
   }
   checkStatus()
 </script>

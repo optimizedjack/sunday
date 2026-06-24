@@ -578,16 +578,298 @@
   #promptInput { flex:1;background:none;border:none;outline:none;font-size:14px;font-family:var(--font);color:var(--text);resize:none;line-height:1.6;min-height:24px;max-height:140px;padding:2px 0; }
   #promptInput::placeholder { color:var(--text-muted); }
 
+  /* ── Send button — liquid glass ── */
   .send-btn {
     width:36px;height:36px;border-radius:12px;border:none;
-    background:linear-gradient(145deg,#ff7070,#ff5757);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 8px rgba(255,87,87,0.3);
-    color:#fff;cursor:pointer;
+    background: rgba(255,100,80,0.13);
+    backdrop-filter: blur(20px) saturate(200%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%);
+    border: 1px solid rgba(255,255,255,0.7);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,0.92),
+      inset 0 -1px 0 rgba(255,87,87,0.12),
+      inset 1px 0 0 rgba(255,255,255,0.55),
+      inset -1px 0 0 rgba(255,255,255,0.2),
+      0 2px 12px rgba(255,87,87,0.18),
+      0 1px 2px rgba(0,0,0,0.05);
+    color: var(--accent);
+    cursor:pointer;
     display:flex;align-items:center;justify-content:center;flex-shrink:0;
-    transition:opacity 0.15s,transform 0.1s;
+    transition: all 0.25s cubic-bezier(0.34,1.4,0.64,1);
+    position:relative;overflow:hidden;
   }
-  .send-btn:hover:not(:disabled) { opacity:0.88;transform:scale(1.05); }
+  /* Dome highlight — the "liquid" surface catch */
+  .send-btn::before {
+    content:'';
+    position:absolute;
+    top:0;left:5%;right:5%;
+    height:38%;
+    background:linear-gradient(to bottom,rgba(255,255,255,0.58),rgba(255,255,255,0));
+    border-radius:0 0 50% 50%;
+    pointer-events:none;
+  }
+  .send-btn:hover:not(:disabled) {
+    background: rgba(255,87,87,0.2);
+    border-color: rgba(255,255,255,0.85);
+    box-shadow:
+      inset 0 1.5px 0 rgba(255,255,255,0.95),
+      inset 0 -1px 0 rgba(255,87,87,0.18),
+      inset 1px 0 0 rgba(255,255,255,0.65),
+      inset -1px 0 0 rgba(255,255,255,0.25),
+      0 4px 20px rgba(255,87,87,0.28),
+      0 1px 2px rgba(0,0,0,0.04);
+    transform: scale(1.06);
+  }
+  .send-btn:active:not(:disabled) { transform: scale(0.97); }
   .send-btn:disabled { opacity:0.3;cursor:default; }
+
+  /* ── Settings panel ── */
+  .settings-panel {
+    position:fixed;top:0;right:0;bottom:0;z-index:160;
+    width:320px;
+    background:rgba(255,254,248,0.92);
+    backdrop-filter:blur(40px) saturate(160%);
+    -webkit-backdrop-filter:blur(40px) saturate(160%);
+    border-left:1px solid rgba(255,255,255,0.7);
+    box-shadow:-8px 0 48px rgba(0,0,0,0.05), inset 1px 0 0 rgba(255,255,255,0.5);
+    transform:translateX(100%);
+    pointer-events:none;
+    transition:transform 0.4s cubic-bezier(0.34,1.2,0.64,1);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .settings-panel.open { transform:translateX(0); pointer-events:all; }
+
+  .settings-header {
+    padding:20px 20px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid rgba(0,0,0,0.06);
+    flex-shrink:0;
+  }
+  .settings-header-title {
+    font-size:11px;font-weight:600;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--text-muted);
+  }
+  .settings-close {
+    width:28px;height:28px;border-radius:8px;border:none;
+    background:rgba(0,0,0,0.04);color:var(--text-muted);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-size:14px;transition:background 0.15s,color 0.15s;
+  }
+  .settings-close:hover { background:rgba(255,87,87,0.1);color:var(--accent); }
+
+  .settings-body {
+    flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:20px;
+  }
+  .settings-body::-webkit-scrollbar { display:none; }
+
+  .settings-section-label {
+    font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--text-muted);margin-bottom:10px;
+  }
+
+  .settings-field { display:flex;flex-direction:column;gap:5px;margin-bottom:12px; }
+  .settings-field:last-child { margin-bottom:0; }
+
+  .settings-label {
+    font-size:11px;font-weight:500;color:var(--text-muted);
+  }
+
+  .settings-input-wrap { position:relative;display:flex;align-items:center; }
+
+  .settings-input {
+    width:100%;background:rgba(255,255,255,0.6);
+    border:1px solid rgba(255,255,255,0.8);
+    border-radius:10px;padding:8px 12px;
+    font-size:12px;font-family:var(--font);color:var(--text);
+    outline:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),inset 0 -1px 0 rgba(0,0,0,0.03);
+    backdrop-filter:blur(8px);
+    transition:border-color 0.15s,box-shadow 0.15s;
+  }
+  .settings-input:focus {
+    border-color:rgba(255,87,87,0.35);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),0 0 0 2px rgba(255,87,87,0.1);
+  }
+  .settings-input.has-reveal { padding-right:36px; }
+  .settings-input::placeholder { color:var(--text-muted);opacity:0.5; }
+
+  .settings-reveal {
+    position:absolute;right:8px;
+    width:22px;height:22px;border-radius:6px;border:none;
+    background:none;color:var(--text-muted);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;transition:color 0.15s;flex-shrink:0;
+  }
+  .settings-reveal:hover { color:var(--accent); }
+
+  .settings-hint {
+    font-size:10px;color:var(--text-muted);opacity:0.65;line-height:1.4;
+  }
+
+  .settings-footer {
+    padding:14px 16px;border-top:1px solid rgba(0,0,0,0.06);
+    display:flex;flex-direction:column;gap:8px;flex-shrink:0;
+  }
+
+  .settings-save-btn {
+    width:100%;height:36px;border-radius:12px;border:none;
+    background:linear-gradient(145deg,rgba(255,112,112,0.85),rgba(255,87,87,0.9));
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.5);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.3),0 2px 10px rgba(255,87,87,0.2);
+    color:#fff;font-size:12px;font-family:var(--font);font-weight:500;
+    cursor:pointer;transition:opacity 0.15s,transform 0.1s;
+  }
+  .settings-save-btn:hover { opacity:0.88;transform:scale(1.01); }
+  .settings-save-btn:disabled { opacity:0.4;cursor:default; }
+
+  .settings-status {
+    font-size:11px;text-align:center;min-height:16px;
+    transition:opacity 0.2s;
+  }
+  .settings-status.success { color:var(--green); }
+  .settings-status.warn    { color:rgba(200,140,0,0.9); }
+  .settings-status.error   { color:var(--accent); }
+
+  /* ── Pin button ── */
+  .history-action-btn.pinned { color:var(--accent); }
+  .history-item.is-pinned {
+    background:rgba(255,87,87,0.04);
+    border-color:rgba(255,87,87,0.1);
+  }
+  .history-pin-label {
+    font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+    padding:8px 14px 2px;color:var(--accent);opacity:0.8;
+  }
+  .history-recent-label {
+    font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+    padding:12px 14px 2px;color:var(--text-muted);opacity:0.6;
+  }
+
+  /* ── Agent panel ── */
+  .agent-panel {
+    position:fixed;top:0;right:0;bottom:0;z-index:160;
+    width:400px;
+    background:rgba(255,254,248,0.92);
+    backdrop-filter:blur(40px) saturate(160%);
+    -webkit-backdrop-filter:blur(40px) saturate(160%);
+    border-left:1px solid rgba(255,255,255,0.7);
+    box-shadow:-8px 0 48px rgba(0,0,0,0.05), inset 1px 0 0 rgba(255,255,255,0.5);
+    transform:translateX(100%);
+    pointer-events:none;
+    transition:transform 0.4s cubic-bezier(0.34,1.2,0.64,1);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .agent-panel.open { transform:translateX(0); pointer-events:all; }
+
+  .agent-header {
+    padding:20px 20px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid rgba(0,0,0,0.06);flex-shrink:0;
+  }
+  .agent-header-left { display:flex;align-items:center;gap:10px; }
+  .agent-header-title {
+    font-size:11px;font-weight:600;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--text-muted);
+  }
+  .agent-status-pill {
+    font-size:9px;font-weight:600;letter-spacing:0.06em;
+    padding:2px 8px;border-radius:6px;
+    background:rgba(0,0,0,0.05);color:var(--text-muted);
+    transition:background 0.2s,color 0.2s;
+  }
+  .agent-status-pill.running {
+    background:rgba(255,222,89,0.25);color:rgba(160,120,0,0.9);
+  }
+  .agent-status-pill.done {
+    background:rgba(126,217,87,0.2);color:rgba(40,120,30,0.9);
+  }
+
+  .agent-setup {
+    padding:16px;border-bottom:1px solid rgba(0,0,0,0.06);
+    display:flex;flex-direction:column;gap:10px;flex-shrink:0;
+  }
+  .agent-setup textarea.settings-input { resize:none;line-height:1.5; }
+
+  .agent-steps {
+    flex:1;overflow-y:auto;padding:12px;
+    display:flex;flex-direction:column;gap:10px;
+    min-height:0;
+  }
+  .agent-steps::-webkit-scrollbar { display:none; }
+  .agent-steps-empty {
+    flex:1;display:flex;align-items:center;justify-content:center;
+    font-size:13px;color:var(--text-muted);text-align:center;padding:32px;
+    opacity:0.5;pointer-events:none;
+  }
+
+  .agent-step-card {
+    background:rgba(255,255,255,0.6);
+    border:1px solid rgba(255,255,255,0.78);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 12px rgba(0,0,0,0.04);
+    border-radius:14px;padding:14px;
+    display:flex;flex-direction:column;gap:8px;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+  }
+  .agent-step-num {
+    font-size:9px;font-weight:600;letter-spacing:0.08em;
+    text-transform:uppercase;color:var(--text-muted);
+  }
+  .agent-thought {
+    font-size:12px;color:var(--text-muted);line-height:1.55;
+    font-style:italic;
+    background:rgba(0,0,0,0.03);border-radius:8px;padding:8px 10px;
+  }
+  .agent-action-wrap { display:flex;flex-direction:column;gap:5px; }
+  .agent-action-name {
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:11px;font-weight:600;color:var(--accent);
+    background:rgba(255,87,87,0.08);padding:3px 9px;
+    border-radius:6px;align-self:flex-start;
+  }
+  .agent-action-params {
+    font-size:11px;font-family:'JetBrains Mono',monospace;
+    color:var(--text-muted);line-height:1.6;
+    padding:7px 10px;background:rgba(0,0,0,0.03);
+    border-radius:6px;white-space:pre-wrap;word-break:break-all;
+  }
+  .agent-result-tag {
+    font-size:10px;color:rgba(40,130,50,0.8);
+    background:rgba(126,217,87,0.1);
+    border:1px solid rgba(126,217,87,0.2);
+    border-radius:6px;padding:6px 10px;
+    font-family:'JetBrains Mono',monospace;
+    white-space:pre-wrap;word-break:break-all;line-height:1.5;
+  }
+  .agent-done-card {
+    background:rgba(126,217,87,0.1);
+    border:1px solid rgba(126,217,87,0.28);
+    border-radius:14px;padding:14px;
+    text-align:center;font-size:13px;font-weight:500;
+    color:rgba(30,110,25,0.9);
+  }
+  .agent-error-card {
+    background:rgba(255,87,87,0.07);
+    border:1px solid rgba(255,87,87,0.2);
+    border-radius:14px;padding:14px;
+    font-size:12px;color:var(--accent);line-height:1.5;
+  }
+
+  .agent-controls {
+    padding:14px 16px;border-top:1px solid rgba(0,0,0,0.06);
+    display:flex;flex-direction:column;gap:8px;flex-shrink:0;
+  }
+  .agent-controls-row { display:flex;gap:8px; }
+  .agent-btn-secondary {
+    height:36px;padding:0 16px;border-radius:12px;border:none;
+    background:rgba(0,0,0,0.05);color:var(--text-muted);
+    font-size:12px;font-family:var(--font);font-weight:500;
+    cursor:pointer;transition:background 0.15s,color 0.15s;flex-shrink:0;
+  }
+  .agent-btn-secondary:hover { background:rgba(0,0,0,0.09);color:var(--text); }
 </style>
 <script src="/marked.min.js"></script>
 <script src="/purify.min.js"></script>
@@ -616,7 +898,146 @@
   </div>
 </div>
 
-<!-- Canvas overlay -->
+<!-- Settings panel -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-header">
+    <span class="settings-header-title">Environment</span>
+    <button class="settings-close" onclick="toggleSettings()">✕</button>
+  </div>
+  <div class="settings-body" id="settingsBody">
+
+    <div>
+      <div class="settings-section-label">Ollama</div>
+      <div class="settings-field">
+        <label class="settings-label">API URL</label>
+        <div class="settings-input-wrap">
+          <input class="settings-input" id="cfg-OLLAMA_URL" type="text" placeholder="http://localhost:11434" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+      <div class="settings-field">
+        <label class="settings-label">Default model</label>
+        <div class="settings-input-wrap">
+          <input class="settings-input" id="cfg-OLLAMA_MODEL" type="text" placeholder="llama3.2" autocomplete="off" spellcheck="false">
+        </div>
+        <span class="settings-hint">Used when no model is selected in the picker</span>
+      </div>
+      <div class="settings-field">
+        <label class="settings-label">Embedding model</label>
+        <div class="settings-input-wrap">
+          <input class="settings-input" id="cfg-EMBED_MODEL" type="text" placeholder="nomic-embed-text" autocomplete="off" spellcheck="false">
+        </div>
+        <span class="settings-hint">Used for semantic memory search. Pull via the model picker if not installed</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="settings-section-label">Obsidian</div>
+      <div class="settings-field">
+        <label class="settings-label">Local REST API URL</label>
+        <div class="settings-input-wrap">
+          <input class="settings-input" id="cfg-OBSIDIAN_URL" type="text" placeholder="https://localhost:27124" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+      <div class="settings-field">
+        <label class="settings-label">API key</label>
+        <div class="settings-input-wrap">
+          <input class="settings-input has-reveal" id="cfg-OBSIDIAN_KEY" type="password" placeholder="••••••••" autocomplete="off" spellcheck="false">
+          <button class="settings-reveal" onclick="toggleReveal('cfg-OBSIDIAN_KEY', this)" title="Show / hide">👁</button>
+        </div>
+        <span class="settings-hint">Changes to this key require a server restart</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="settings-section-label">Vault</div>
+      <div class="settings-field">
+        <label class="settings-label">Notes folder</label>
+        <div class="settings-input-wrap">
+          <input class="settings-input" id="cfg-VAULT_FOLDER" type="text" placeholder="e.g. Sunday/Brain" autocomplete="off" spellcheck="false">
+        </div>
+        <span class="settings-hint">Relative path inside your vault. Leave blank for root</span>
+      </div>
+      <div class="settings-field">
+        <label class="settings-label">Skills folder</label>
+        <div class="settings-input-wrap">
+          <input class="settings-input" id="cfg-SKILLS_FOLDER" type="text" placeholder="Sunday/Skills" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="settings-section-label">Agent API</div>
+      <div class="settings-field">
+        <label class="settings-label">Agent key</label>
+        <div class="settings-input-wrap">
+          <input class="settings-input has-reveal" id="cfg-AGENT_KEY" type="password" placeholder="Leave blank to disable auth" autocomplete="off" spellcheck="false">
+          <button class="settings-reveal" onclick="toggleReveal('cfg-AGENT_KEY', this)" title="Show / hide">👁</button>
+        </div>
+        <span class="settings-hint">External agents must send x-agent-key: &lt;value&gt; header. Requires restart to update</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="settings-section-label">Semantic memory</div>
+      <div class="settings-field">
+        <span class="settings-hint" id="indexStatusText">Checking index…</span>
+      </div>
+      <div class="settings-field">
+        <button class="settings-save-btn" id="reindexBtn" onclick="startReindex()" style="background:rgba(0,0,0,0.06);color:var(--text-muted);box-shadow:none;border:1px solid rgba(0,0,0,0.08);">Build index from vault</button>
+      </div>
+      <div id="reindexProgress" style="display:none;margin-top:4px;">
+        <div style="height:3px;background:rgba(0,0,0,0.06);border-radius:2px;overflow:hidden;margin-bottom:6px;">
+          <div id="reindexBar" style="height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s ease;width:0%"></div>
+        </div>
+        <span class="settings-hint" id="reindexStatus"></span>
+      </div>
+    </div>
+
+  </div>
+  <div class="settings-footer">
+    <button class="settings-save-btn" id="settingsSaveBtn" onclick="saveSettings()">Save changes</button>
+    <div class="settings-status" id="settingsStatus"></div>
+  </div>
+</div>
+
+<!-- Agent panel -->
+<div class="agent-panel" id="agentPanel">
+  <div class="agent-header">
+    <div class="agent-header-left">
+      <span class="agent-header-title">Agent</span>
+      <span class="agent-status-pill" id="agentStatusPill">idle</span>
+    </div>
+    <button class="settings-close" onclick="toggleAgent()">✕</button>
+  </div>
+
+  <div class="agent-setup" id="agentSetup">
+    <div class="settings-field">
+      <label class="settings-label">Task</label>
+      <textarea class="settings-input" id="agentTask" rows="3" placeholder="Describe what you want the agent to do…" style="resize:none;line-height:1.5;" spellcheck="false"></textarea>
+    </div>
+    <div class="settings-field">
+      <label class="settings-label">Agent capabilities</label>
+      <input class="settings-input" id="agentCaps" type="text" placeholder="read_file, write_file, run_command, browser" autocomplete="off" spellcheck="false">
+      <span class="settings-hint">Comma-separated actions your agent can actually execute</span>
+    </div>
+    <button class="settings-save-btn" id="agentStartBtn" onclick="startAgentRun()">▶ Start planning</button>
+  </div>
+
+  <div class="agent-steps" id="agentSteps">
+    <div class="agent-steps-empty">Run a task to see Sunday's reasoning chain</div>
+  </div>
+
+  <div class="agent-controls" id="agentControls" style="display:none;">
+    <div class="settings-field" style="margin-bottom:0;">
+      <label class="settings-label">Step result <span style="opacity:0.45;font-weight:400;">(paste what the action returned, or leave blank)</span></label>
+      <textarea class="settings-input" id="agentResultInput" rows="2" placeholder="{}" style="resize:none;font-family:'JetBrains Mono',monospace;font-size:11px;" spellcheck="false"></textarea>
+    </div>
+    <div class="agent-controls-row">
+      <button class="settings-save-btn" id="agentNextBtn" onclick="advanceAgentStep()" style="flex:1;">→ Next step</button>
+      <button class="agent-btn-secondary" onclick="resetAgent()">Reset</button>
+    </div>
+  </div>
+</div>
 <div class="canvas-overlay" id="canvasOverlay">
   <div class="canvas-toolbar">
     <span class="canvas-toolbar-title">Canvas</span>
@@ -683,7 +1104,7 @@
           <line x1="12.2" y1="4.8" x2="8.7" y2="11.3" stroke="currentColor" stroke-width="1.2"/>
         </svg>
       </button>
-      <!-- Status dot — sits between the two button pairs -->
+      <!-- Status dot -->
       <div class="status-dot" id="statusDot">
         <span class="status-dot-label" id="statusText"></span>
       </div>
@@ -701,7 +1122,19 @@
           <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
       </button>
-      <!-- Status dot — fixed to top-center, expands on connect -->
+      <button class="gallery-btn glass" id="settingsBtn" onclick="toggleSettings()" title="Environment settings">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="2.2" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M8 1.5v1.2M8 13.3v1.2M1.5 8h1.2M13.3 8h1.2M3.4 3.4l.85.85M11.75 11.75l.85.85M3.4 12.6l.85-.85M11.75 4.25l.85-.85" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="gallery-btn glass" id="agentBtn" onclick="toggleAgent()" title="Agent planner">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="3" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M5 7h6M5 9.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <circle cx="13" cy="3" r="2.5" fill="var(--accent)" stroke="var(--glass-bg)" stroke-width="1"/>
+        </svg>
+      </button>
     </div>
   </header>
 
@@ -725,7 +1158,7 @@
         <textarea id="promptInput" placeholder="Ask anything…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendPrompt()" title="Send">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 13V3M3 8l5-5 5 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 13V3M3 8l5-5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
       </div>
@@ -751,12 +1184,10 @@
   let conversationHistory = []
   let sessionFilename = null
   let currentMode = 'free'
-  let currentSkillPrompt = ''  // set when a skill pill is active
-  let currentModel = ''        // empty = server default; populated after loadModels()
+  let currentSkillPrompt = ''
+  let currentModel = ''
   let pastContext = ''
 
-  // DOMPurify is downloaded by setup.sh alongside marked.min.js.
-  // If it somehow failed to load, fall back to stripping script tags rather than crashing.
   function safeHtml(markdown) {
     const html = marked.parse(markdown)
     if (typeof DOMPurify !== 'undefined') return DOMPurify.sanitize(html)
@@ -812,7 +1243,6 @@
 
     dropdown.innerHTML = ''
 
-    // ── Installed ──
     if (installed.length) {
       const lbl = document.createElement('div'); lbl.className = 'model-section-label'; lbl.textContent = 'Installed'
       dropdown.appendChild(lbl)
@@ -831,7 +1261,6 @@
       })
     }
 
-    // ── Pull by name ──
     const div1 = document.createElement('div'); div1.className = 'model-section-divider'; dropdown.appendChild(div1)
     const pullLbl = document.createElement('div'); pullLbl.className = 'model-section-label'; pullLbl.textContent = 'Pull a model'
     dropdown.appendChild(pullLbl)
@@ -844,7 +1273,6 @@
     pullBtn.addEventListener('click', e => { e.stopPropagation(); pullModel(pullInput.value.trim(), null, pullInput) })
     pullRow.appendChild(pullInput); pullRow.appendChild(pullBtn); dropdown.appendChild(pullRow)
 
-    // ── Browse popular ──
     if (libraryModels.length) {
       const div2 = document.createElement('div'); div2.className = 'model-section-divider'; dropdown.appendChild(div2)
       const installedSet = new Set(installed.flatMap(m => [m, m.replace(/:latest$/, '')]))
@@ -883,7 +1311,52 @@
       dropdown.appendChild(libraryEl)
     }
 
-    // ── Progress ──
+    // ── Optional features ──
+    {
+      const FEATURE_MODELS = [
+        {
+          name:        'nomic-embed-text',
+          feature:     'Semantic memory',
+          description: 'Finds relevant notes by meaning, not just recency',
+          size:        '274 MB'
+        }
+      ]
+      const divF = document.createElement('div'); divF.className = 'model-section-divider'; dropdown.appendChild(divF)
+      const featLbl = document.createElement('div'); featLbl.className = 'model-section-label'; featLbl.textContent = 'Optional features'
+      dropdown.appendChild(featLbl)
+
+      const installedFlatSet = new Set(installed.flatMap(m => [m, m.replace(/:latest$/, '')]))
+
+      FEATURE_MODELS.forEach(({ name, feature, description, size }) => {
+        const isInstalled = installedFlatSet.has(name)
+        const item = document.createElement('div')
+        item.className = 'model-library-item'
+        item.style.cssText = 'align-items:flex-start;padding:9px 8px;'
+        item.innerHTML = `
+          <div class="model-library-info" style="min-width:0;flex:1;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap;">
+              <div class="model-library-name">${feature}</div>
+              <div style="font-size:9px;font-weight:500;letter-spacing:0.06em;background:rgba(255,87,87,0.1);color:var(--accent);padding:1px 6px;border-radius:5px;white-space:nowrap;">${name}</div>
+            </div>
+            <div class="model-library-desc">${description}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;margin-left:8px;">
+            <div class="model-library-size">${size}</div>
+            <button class="model-library-pull-btn feat-btn" style="width:auto;padding:0 8px;font-size:10px;font-weight:500;border-radius:6px;height:20px;" ${isInstalled ? 'disabled' : ''}>
+              ${isInstalled ? '✓ installed' : '↓ install'}
+            </button>
+          </div>
+        `
+        if (!isInstalled) {
+          item.querySelector('.feat-btn').addEventListener('click', e => {
+            e.stopPropagation()
+            pullModel(name, item)
+          })
+        }
+        dropdown.appendChild(item)
+      })
+    }
+
     const prog = document.createElement('div'); prog.className = 'model-pull-progress'; prog.id = 'pullProgress'; prog.style.display = 'none'
     prog.innerHTML = `<div class="model-pull-status" id="pullStatus"></div><div class="model-pull-bar"><div class="model-pull-bar-fill" id="pullBarFill"></div></div>`
     dropdown.appendChild(prog)
@@ -1036,11 +1509,7 @@
   function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrompt() } }
   function fillPrompt(text) { const i = document.getElementById('promptInput'); i.value = text; autoResize(i); i.focus() }
 
-  // ─────────────────────────────────────────────
-  // Shared: load a session from Obsidian into chat
-  // ─────────────────────────────────────────────
   async function loadSession(filename) {
-    // Close all overlays
     historyOpen = false; canvasOpen = false; galleryOpen = false
     document.getElementById('historyPanel').classList.remove('open')
     document.getElementById('canvasOverlay').classList.remove('open')
@@ -1074,7 +1543,6 @@
           conversationHistory.push({ role: 'assistant', content })
         }
       })
-      // Scroll to bottom after layout is complete
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           const chatArea = document.getElementById('chatArea')
@@ -1091,9 +1559,6 @@
     }
   }
 
-  // ─────────────────────────────────────────────
-  // History panel
-  // ─────────────────────────────────────────────
   function toggleHistory() {
     historyOpen = !historyOpen
     document.getElementById('historyPanel').classList.toggle('open', historyOpen)
@@ -1105,7 +1570,6 @@
     } else {
       clearTimeout(searchTimeout)
     }
-    // Close others
     if (historyOpen) {
       galleryOpen = false
       document.getElementById('galleryOverlay').classList.remove('open')
@@ -1113,19 +1577,26 @@
     }
   }
 
+  // ── Pins ─────────────────────────────────────────────────
+  let pinnedSet = new Set()
+
   async function loadHistory() {
     const list = document.getElementById('historyList')
     list.innerHTML = '<div class="history-empty" style="opacity:0.5">Loading…</div>'
     try {
-      const res = await fetch(`${API}/notes`)
-      const data = await res.json()
-      renderHistory(data.notes || [])
+      const [notesRes, pinsRes] = await Promise.all([
+        fetch(`${API}/notes`),
+        fetch(`${API}/pins`)
+      ])
+      const notesData = await notesRes.json()
+      const pinsData  = await pinsRes.json()
+      pinnedSet = new Set(pinsData.pins || [])
+      renderHistory(notesData.notes || [])
     } catch {
       list.innerHTML = '<div class="history-empty">Could not load history</div>'
     }
   }
 
-  // ── Rename / Delete helpers ──
   async function deleteNote(filename, el, onSuccess) {
     if (!confirm('Delete this note?')) return
     try {
@@ -1192,47 +1663,82 @@
 
   function renderHistory(notes) {
     const list = document.getElementById('historyList')
-    if (!notes.length) {
-      list.innerHTML = '<div class="history-empty">No sessions yet</div>'
-      return
-    }
+    if (!notes.length) { list.innerHTML = '<div class="history-empty">No sessions yet</div>'; return }
     list.innerHTML = ''
-    notes.forEach(filename => {
-      const name = filename.split('/').pop().replace('.md', '')
-      // Parse "YYYY-MM-DD HH-MM title" format
-      const dateMatch = name.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}-\d{2})\s+(.+)$/)
-      const date = dateMatch ? dateMatch[1] : name.slice(0, 10)
-      const time = dateMatch ? dateMatch[2].replace('-', ':') : ''
-      const title = dateMatch ? dateMatch[3] : name.slice(11) || name
+    const pinned  = notes.filter(f => pinnedSet.has(f))
+    const regular = notes.filter(f => !pinnedSet.has(f))
+    if (pinned.length) {
+      const lbl = document.createElement('div'); lbl.className = 'history-pin-label'; lbl.textContent = '📌 Pinned'
+      list.appendChild(lbl)
+      pinned.forEach(f => renderHistoryItem(f, list))
+    }
+    if (regular.length) {
+      if (pinned.length) {
+        const lbl2 = document.createElement('div'); lbl2.className = 'history-recent-label'; lbl2.textContent = 'Recent'
+        list.appendChild(lbl2)
+      }
+      regular.forEach(f => renderHistoryItem(f, list))
+    }
+  }
 
-      const item = document.createElement('div')
-      item.className = 'history-item'
+  function renderHistoryItem(filename, list) {
+    const name = filename.split('/').pop().replace('.md', '')
+    const dateMatch = name.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}-\d{2})\s+(.+)$/)
+    const date  = dateMatch ? dateMatch[1] : name.slice(0, 10)
+    const time  = dateMatch ? dateMatch[2].replace('-', ':') : ''
+    const title = dateMatch ? dateMatch[3] : name.slice(11) || name
+    const isPinned = pinnedSet.has(filename)
 
-      const dateEl = document.createElement('div'); dateEl.className = 'history-item-date'; dateEl.textContent = date
-      const titleEl = document.createElement('div'); titleEl.className = 'history-item-title'; titleEl.textContent = title
-      if (time) { const timeEl = document.createElement('div'); timeEl.className = 'history-item-time'; timeEl.textContent = time; item.appendChild(dateEl); item.appendChild(titleEl); item.appendChild(timeEl) }
-      else { item.appendChild(dateEl); item.appendChild(titleEl) }
+    const item = document.createElement('div')
+    item.className = 'history-item' + (isPinned ? ' is-pinned' : '')
 
-      // Action buttons
-      const actions = document.createElement('div'); actions.className = 'history-item-actions'
-      const renameBtn = document.createElement('button'); renameBtn.className = 'history-action-btn'; renameBtn.title = 'Rename'; renameBtn.textContent = '✎'
-      const deleteBtn = document.createElement('button'); deleteBtn.className = 'history-action-btn'; deleteBtn.title = 'Delete'; deleteBtn.textContent = '✕'
-      renameBtn.addEventListener('click', e => {
-        e.stopPropagation()
-        startInlineRename(titleEl, title, (newTitle, restore) => {
-          renameNote(filename, newTitle, newFilename => {
-            titleEl.textContent = newTitle
-            item.dataset.filename = newFilename
-            filename = newFilename
-          })
+    const dateEl  = document.createElement('div'); dateEl.className  = 'history-item-date';  dateEl.textContent  = date
+    const titleEl = document.createElement('div'); titleEl.className = 'history-item-title'; titleEl.textContent = title
+    if (time) {
+      const timeEl = document.createElement('div'); timeEl.className = 'history-item-time'; timeEl.textContent = time
+      item.appendChild(dateEl); item.appendChild(titleEl); item.appendChild(timeEl)
+    } else {
+      item.appendChild(dateEl); item.appendChild(titleEl)
+    }
+
+    const actions = document.createElement('div'); actions.className = 'history-item-actions'
+    const pinBtn  = document.createElement('button')
+    pinBtn.className = 'history-action-btn' + (isPinned ? ' pinned' : '')
+    pinBtn.title     = isPinned ? 'Unpin' : 'Pin to context'
+    pinBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 1.5h3M6 1.5V5M3.5 5h5l-.75 3h-3.5L3.5 5zM6 8v2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    pinBtn.addEventListener('click', e => { e.stopPropagation(); togglePin(filename, pinBtn) })
+
+    const renameBtn = document.createElement('button'); renameBtn.className = 'history-action-btn'; renameBtn.title = 'Rename'; renameBtn.textContent = '✎'
+    const deleteBtn = document.createElement('button'); deleteBtn.className = 'history-action-btn'; deleteBtn.title = 'Delete'; deleteBtn.textContent = '✕'
+    renameBtn.addEventListener('click', e => {
+      e.stopPropagation()
+      startInlineRename(titleEl, title, (newTitle, restore) => {
+        renameNote(filename, newTitle, newFilename => {
+          titleEl.textContent = newTitle
+          item.dataset.filename = newFilename
+          filename = newFilename
         })
       })
-      deleteBtn.addEventListener('click', e => { e.stopPropagation(); deleteNote(filename, item) })
-      actions.appendChild(renameBtn); actions.appendChild(deleteBtn); item.appendChild(actions)
-
-      item.addEventListener('click', () => loadSession(filename))
-      list.appendChild(item)
     })
+    deleteBtn.addEventListener('click', e => { e.stopPropagation(); deleteNote(filename, item) })
+    actions.appendChild(pinBtn); actions.appendChild(renameBtn); actions.appendChild(deleteBtn)
+    item.appendChild(actions)
+    item.addEventListener('click', () => loadSession(filename))
+    list.appendChild(item)
+  }
+
+  async function togglePin(filename, btn) {
+    const wasPinned = pinnedSet.has(filename)
+    try {
+      await fetch(`${API}/pins`, {
+        method:  wasPinned ? 'DELETE' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ filename })
+      })
+      if (wasPinned) pinnedSet.delete(filename)
+      else           pinnedSet.add(filename)
+      loadHistory()
+    } catch {}
   }
 
   document.addEventListener('click', e => {
@@ -1243,9 +1749,6 @@
     }
   })
 
-  // ─────────────────────────────────────────────
-  // Gallery (3D carousel — unchanged)
-  // ─────────────────────────────────────────────
   function toggleGallery() {
     galleryOpen = !galleryOpen
     document.getElementById('galleryOverlay').classList.toggle('open', galleryOpen)
@@ -1317,9 +1820,7 @@
   function updateRing() { document.getElementById('carouselRing').style.transform = `rotateY(${rotationY}deg)` }
   function momentumRing() { if(Math.abs(velocity)<0.2)return;velocity*=0.95;rotationY+=velocity;updateRing();rafId=requestAnimationFrame(momentumRing) }
 
-  // ─────────────────────────────────────────────
-  // Canvas
-  // ─────────────────────────────────────────────
+  // ── Canvas ───────────────────────────────────────────────
   const CANVAS_KEY = 'sunday_canvas_v1'
   const CARD_W = 210, CARD_H = 140
 
@@ -1378,7 +1879,6 @@
 
   function renderCanvas(notes) {
     const world = document.getElementById('canvasWorld')
-    // Remove old cards (keep svg)
     world.querySelectorAll('.canvas-card,.canvas-empty').forEach(c => c.remove())
 
     if (!notes.length) {
@@ -1441,7 +1941,6 @@
         deleteNote(filename, card, () => loadCanvasNotes())
       })
 
-      // Click: connect mode or open
       card.addEventListener('click', e => {
         if (e.target.closest('.canvas-card-open') || e.target.closest('.canvas-card-action-btn')) return
         if (connectMode) {
@@ -1450,7 +1949,6 @@
         }
       })
 
-      // Drag
       attachCardDrag(card, filename)
       world.appendChild(card)
     })
@@ -1494,7 +1992,6 @@
     })
   }
 
-  // Canvas pan & zoom
   function initCanvasPanZoom() {
     const overlay = document.getElementById('canvasOverlay')
     const world = document.getElementById('canvasWorld')
@@ -1542,7 +2039,6 @@
   function applyWorldTransform() {
     const world = document.getElementById('canvasWorld')
     world.style.transform = `translate(${canvasState.pan.x}px, ${canvasState.pan.y}px) scale(${canvasState.scale})`
-    // Dot grid tracks pan + zoom
     const overlay = document.getElementById('canvasOverlay')
     const size = 24 * canvasState.scale
     overlay.style.backgroundSize = `${size}px ${size}px`
@@ -1569,7 +2065,6 @@
     applyWorldTransform()
   }
 
-  // Connect mode
   function toggleConnectMode() {
     connectMode = !connectMode
     const btn = document.getElementById('connectBtn')
@@ -1596,7 +2091,6 @@
       connectSource = null
       card.classList.remove('connect-source')
     } else {
-      // Add connection if not duplicate
       const exists = canvasState.connections.some(
         c => (c.from === connectSource && c.to === filename) || (c.from === filename && c.to === connectSource)
       )
@@ -1623,7 +2117,6 @@
       const x2 = p2.x + CARD_W / 2, y2 = p2.y + CARD_H / 2
       const mx = (x1 + x2) / 2, my = (y1 + y2) / 2
 
-      // Bezier path
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
       path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`)
       path.setAttribute('stroke', 'rgba(255,87,87,0.35)')
@@ -1632,7 +2125,6 @@
       path.setAttribute('fill', 'none')
       svg.appendChild(path)
 
-      // Delete button at midpoint
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g')
       g.setAttribute('class', 'conn-delete')
 
@@ -1661,19 +2153,19 @@
 
   initCanvasPanZoom()
 
-  // ─────────────────────────────────────────────
-  // Chat
-  // ─────────────────────────────────────────────
+  // ── Chat ─────────────────────────────────────────────────
   let abortController = null
 
   function setGenerating(on) {
     const btn = document.getElementById('sendBtn')
     if (on) {
-      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1.5" y="1.5" width="10" height="10" rx="2.5" fill="white"/></svg>`
+      // Stop icon — inherits currentColor (accent red) from parent
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1.5" y="1.5" width="10" height="10" rx="2.5" fill="currentColor" opacity="0.85"/></svg>`
       btn.onclick = stopGeneration
       btn.disabled = false
     } else {
-      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13V3M3 8l5-5 5 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      // Arrow icon — inherits currentColor (accent red)
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 13V3M3 8l5-5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`
       btn.onclick = sendPrompt
       btn.disabled = false
     }
@@ -1750,9 +2242,7 @@
 
     } catch (err) {
       if (err.name === 'AbortError') {
-        // User stopped generation — remove thinking if stream hadn't started yet
         if (!streamStarted) thinking.remove()
-        // Keep whatever was streamed
         if (fullResponse) {
           lastResponse = fullResponse
           conversationHistory.push({ role: 'user', content: prompt })
@@ -1859,11 +2349,351 @@
       dot.classList.remove('online'); dot.classList.add('offline')
       text.textContent = 'Offline'
     }
-    // Expand dot → pill
     dot.classList.add('expanded')
-    // Collapse back to dot after 2.6s
     setTimeout(() => dot.classList.remove('expanded'), 2600)
   }
+  // ── Settings panel ───────────────────────────────────────
+  let settingsOpen = false
+
+  function toggleSettings() {
+    settingsOpen = !settingsOpen
+    document.getElementById('settingsPanel').classList.toggle('open', settingsOpen)
+    document.getElementById('settingsBtn').classList.toggle('active', settingsOpen)
+    if (settingsOpen) {
+      loadSettings()
+      // Close other panels
+      historyOpen = false; galleryOpen = false
+      document.getElementById('historyPanel').classList.remove('open')
+      document.getElementById('historyBtn').classList.remove('active')
+      document.getElementById('galleryOverlay').classList.remove('open')
+      document.getElementById('galleryBtn').classList.remove('active')
+    }
+  }
+
+  document.addEventListener('click', e => {
+    if (settingsOpen && !e.target.closest('.settings-panel') && !e.target.closest('#settingsBtn')) {
+      settingsOpen = false
+      document.getElementById('settingsPanel').classList.remove('open')
+      document.getElementById('settingsBtn').classList.remove('active')
+    }
+  })
+
+  async function loadSettings() {
+    try {
+      const res  = await fetch(`${API}/config`)
+      const data = await res.json()
+      const keys = ['OLLAMA_URL', 'OLLAMA_MODEL', 'EMBED_MODEL', 'OBSIDIAN_URL', 'OBSIDIAN_KEY', 'VAULT_FOLDER', 'SKILLS_FOLDER', 'AGENT_KEY']
+      keys.forEach(k => {
+        const el = document.getElementById(`cfg-${k}`)
+        if (el) el.value = data[k] || ''
+      })
+      setSettingsStatus('')
+    } catch {
+      setSettingsStatus('Could not load config', 'error')
+    }
+    loadIndexStatus()
+  }
+
+  async function loadIndexStatus() {
+    const el = document.getElementById('indexStatusText')
+    if (!el) return
+    try {
+      const res  = await fetch(`${API}/index-status`)
+      const data = await res.json()
+      if (data.embedAvailable === false) {
+        el.textContent = `Semantic search unavailable — pull ${data.embedModel} via the model picker`
+        el.style.color = 'var(--accent)'
+      } else if (data.indexed === 0) {
+        el.textContent = 'No notes indexed yet — click below to build the index'
+        el.style.color = ''
+      } else {
+        el.textContent = `${data.indexed} notes indexed with ${data.embedModel}`
+        el.style.color = 'var(--green)'
+      }
+    } catch {
+      el.textContent = 'Could not load index status'
+    }
+  }
+
+  async function startReindex() {
+    const btn      = document.getElementById('reindexBtn')
+    const progress = document.getElementById('reindexProgress')
+    const bar      = document.getElementById('reindexBar')
+    const status   = document.getElementById('reindexStatus')
+
+    btn.disabled = true
+    btn.textContent = 'Indexing…'
+    progress.style.display = 'block'
+    bar.style.width = '0%'
+    status.textContent = 'Starting…'
+    status.style.color = ''
+
+    try {
+      const res    = await fetch(`${API}/reindex`, { method: 'POST' })
+      const reader = res.body.getReader()
+      const dec    = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const lines = dec.decode(value).split('\n').filter(l => l.startsWith('data: '))
+        for (const line of lines) {
+          const raw = line.slice(6)
+          if (raw === '[DONE]') break
+          try {
+            const json = JSON.parse(raw)
+            if (json.error) {
+              status.textContent = json.error
+              status.style.color = 'var(--accent)'
+              break
+            }
+            if (json.total) bar.style.width = ((json.indexed / json.total) * 100) + '%'
+            status.textContent = json.status || ''
+            if (json.done) {
+              bar.style.width = '100%'
+              status.style.color = 'var(--green)'
+              loadIndexStatus()
+            }
+          } catch {}
+        }
+      }
+    } catch {
+      status.textContent = 'Reindex failed — is server running?'
+      status.style.color = 'var(--accent)'
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Build index from vault'
+    }
+  }
+
+  async function saveSettings() {
+    const btn = document.getElementById('settingsSaveBtn')
+    btn.disabled = true
+    btn.textContent = 'Saving…'
+
+    const keys = ['OLLAMA_URL', 'OLLAMA_MODEL', 'OBSIDIAN_URL', 'OBSIDIAN_KEY', 'VAULT_FOLDER', 'SKILLS_FOLDER', 'AGENT_KEY']
+    const payload = {}
+    keys.forEach(k => {
+      const el = document.getElementById(`cfg-${k}`)
+      if (el) payload[k] = el.value
+    })
+
+    try {
+      const res  = await fetch(`${API}/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Unknown error')
+
+      if (data.needsRestart) {
+        setSettingsStatus('Saved — restart server to apply key/URL changes', 'warn')
+      } else {
+        setSettingsStatus('Saved ✓', 'success')
+        setTimeout(() => setSettingsStatus(''), 2800)
+      }
+      // Reload masked fields so they show •••• again
+      loadSettings()
+    } catch (err) {
+      setSettingsStatus(err.message || 'Save failed', 'error')
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Save changes'
+    }
+  }
+
+  function setSettingsStatus(msg, type = '') {
+    const el = document.getElementById('settingsStatus')
+    el.textContent = msg
+    el.className = 'settings-status' + (type ? ` ${type}` : '')
+  }
+
+  function toggleReveal(inputId, btn) {
+    const input = document.getElementById(inputId)
+    if (!input) return
+    const isHidden = input.type === 'password'
+    input.type = isHidden ? 'text' : 'password'
+    btn.style.opacity = isHidden ? '1' : '0.5'
+  }
+
+  // ── Agent panel ──────────────────────────────────────────
+  let agentOpen    = false
+  let agentRunning = false
+  let agentStep    = 0
+  let agentHistory = []
+  let agentTask    = ''
+  let agentCaps    = []
+
+  function toggleAgent() {
+    agentOpen = !agentOpen
+    document.getElementById('agentPanel').classList.toggle('open', agentOpen)
+    document.getElementById('agentBtn').classList.toggle('active', agentOpen)
+    if (agentOpen) {
+      settingsOpen = false; historyOpen = false; galleryOpen = false
+      document.getElementById('settingsPanel').classList.remove('open')
+      document.getElementById('settingsBtn').classList.remove('active')
+      document.getElementById('historyPanel').classList.remove('open')
+      document.getElementById('historyBtn').classList.remove('active')
+      document.getElementById('galleryOverlay').classList.remove('open')
+      document.getElementById('galleryBtn').classList.remove('active')
+    }
+  }
+
+  document.addEventListener('click', e => {
+    if (agentOpen && !e.target.closest('.agent-panel') && !e.target.closest('#agentBtn')) {
+      agentOpen = false
+      document.getElementById('agentPanel').classList.remove('open')
+      document.getElementById('agentBtn').classList.remove('active')
+    }
+  })
+
+  function setAgentStatus(status) {
+    const pill = document.getElementById('agentStatusPill')
+    pill.textContent = status
+    pill.className = 'agent-status-pill' + (status === 'running' ? ' running' : status === 'done' ? ' done' : '')
+  }
+
+  async function startAgentRun() {
+    const taskVal = document.getElementById('agentTask').value.trim()
+    if (!taskVal) return
+    agentTask    = taskVal
+    agentCaps    = document.getElementById('agentCaps').value.split(',').map(s => s.trim()).filter(Boolean)
+    agentStep    = 0
+    agentHistory = []
+    agentRunning = true
+
+    const stepsEl = document.getElementById('agentSteps')
+    stepsEl.innerHTML = ''
+    document.getElementById('agentControls').style.display = 'none'
+    document.getElementById('agentResultInput').value = ''
+    setAgentStatus('running')
+
+    await fetchAgentStep(null)
+  }
+
+  async function fetchAgentStep(result) {
+    const nextBtn = document.getElementById('agentNextBtn')
+    if (nextBtn) { nextBtn.disabled = true; nextBtn.textContent = 'Thinking…' }
+
+    try {
+      const res  = await fetch(`${API}/agent`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          task:         agentTask,
+          step:         agentStep,
+          result,
+          history:      agentHistory,
+          capabilities: agentCaps
+        })
+      })
+      const data = await res.json()
+
+      if (!data.ok) {
+        appendAgentError(data.error || data.raw || 'Unknown error')
+        endAgentRun()
+        return
+      }
+
+      agentHistory.push({
+        role:    'user',
+        content: agentStep === 0 ? `Task: ${agentTask}` : `Step ${agentStep} result: ${JSON.stringify(result)}`
+      })
+      agentHistory.push({ role: 'assistant', content: JSON.stringify(data) })
+
+      appendAgentStep(data, agentStep + 1)
+      agentStep++
+
+      if (data.done) {
+        appendAgentDone()
+        endAgentRun()
+      } else {
+        document.getElementById('agentControls').style.display = 'flex'
+        document.getElementById('agentResultInput').value = ''
+        document.getElementById('agentResultInput').focus()
+        if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = '→ Next step' }
+      }
+    } catch {
+      appendAgentError('Could not reach Sunday — is the server running?')
+      endAgentRun()
+    }
+  }
+
+  async function advanceAgentStep() {
+    const raw = document.getElementById('agentResultInput').value.trim()
+    let result = null
+    if (raw) { try { result = JSON.parse(raw) } catch { result = raw } }
+    document.getElementById('agentControls').style.display = 'none'
+    await fetchAgentStep(result)
+  }
+
+  function resetAgent() {
+    agentRunning = false
+    agentStep    = 0
+    agentHistory = []
+    document.getElementById('agentSteps').innerHTML = '<div class="agent-steps-empty">Run a task to see Sunday\'s reasoning chain</div>'
+    document.getElementById('agentControls').style.display = 'none'
+    document.getElementById('agentResultInput').value = ''
+    document.getElementById('agentTask').value = ''
+    setAgentStatus('idle')
+  }
+
+  function endAgentRun() {
+    agentRunning = false
+    document.getElementById('agentControls').style.display = 'none'
+    setAgentStatus('done')
+  }
+
+  function appendAgentStep(data, stepNum) {
+    const steps = document.getElementById('agentSteps')
+    // Remove empty state placeholder
+    const empty = steps.querySelector('.agent-steps-empty')
+    if (empty) empty.remove()
+
+    const card = document.createElement('div')
+    card.className = 'agent-step-card'
+
+    const paramsStr = Object.entries(data.params || {})
+      .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
+      .join('\n')
+
+    card.innerHTML = `
+      <div class="agent-step-num">Step ${stepNum}</div>
+      <div class="agent-thought">${escHtml(data.thought)}</div>
+      <div class="agent-action-wrap">
+        <div class="agent-action-name">⚡ ${escHtml(data.action)}</div>
+        ${paramsStr ? `<div class="agent-action-params">${escHtml(paramsStr)}</div>` : ''}
+      </div>
+    `
+    steps.appendChild(card)
+    steps.scrollTop = steps.scrollHeight
+  }
+
+  function appendAgentDone() {
+    const steps = document.getElementById('agentSteps')
+    const card  = document.createElement('div')
+    card.className  = 'agent-done-card'
+    card.textContent = '✓ Task complete'
+    steps.appendChild(card)
+    steps.scrollTop = steps.scrollHeight
+  }
+
+  function appendAgentError(msg) {
+    const steps = document.getElementById('agentSteps')
+    const card  = document.createElement('div')
+    card.className  = 'agent-error-card'
+    card.textContent = msg
+    steps.appendChild(card)
+    steps.scrollTop = steps.scrollHeight
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  }
+
   checkStatus()
 </script>
 </body>

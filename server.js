@@ -58,11 +58,18 @@ function loadVectorIndex() {
   }
 }
 
+// Serialise all writes through a promise chain so concurrent indexNote()
+// calls can never interleave and silently lose an entry.
+let _indexWriteQueue = Promise.resolve()
+
 function saveVectorIndex() {
-  const data = JSON.stringify({ version: 1, notes: vectorIndex }, null, 0)
-  fs.writeFile(INDEX_PATH, data, 'utf8', err => {
-    if (err) console.error('Could not save vector index:', err.message)
-  })
+  _indexWriteQueue = _indexWriteQueue.then(() => new Promise(resolve => {
+    const data = JSON.stringify({ version: 1, notes: vectorIndex }, null, 0)
+    fs.writeFile(INDEX_PATH, data, 'utf8', err => {
+      if (err) console.error('Could not save vector index:', err.message)
+      resolve()
+    })
+  }))
 }
 
 async function getEmbedding(text) {

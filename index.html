@@ -70,6 +70,66 @@
     .message, .thinking, .send-btn.generating { animation:none; }
   }
 
+  /* ── Mic button ── */
+  @keyframes micPulse {
+    0%,100% { box-shadow:0 0 0 0 rgba(255,59,48,0.35); }
+    50%     { box-shadow:0 0 0 7px rgba(255,59,48,0); }
+  }
+  .mic-btn {
+    width:34px;height:34px;border-radius:50%;border:none;
+    background:transparent;
+    color:var(--text-muted);cursor:pointer;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    transition:background 0.18s,color 0.18s,transform 0.15s cubic-bezier(0.34,1.4,0.64,1);
+  }
+  .mic-btn:hover { background:rgba(60,60,67,0.08);color:var(--text-secondary); }
+  .mic-btn:active { transform:scale(0.9); }
+  .mic-btn.listening {
+    background:rgba(255,59,48,0.1);color:var(--accent);
+    animation:micPulse 1.4s ease-in-out infinite;
+  }
+  .mic-btn.unsupported { opacity:0.28;cursor:default; }
+
+  /* ── Message action buttons (copy / branch) ── */
+  .message-actions {
+    display:flex;gap:5px;padding:2px 4px 0;
+    opacity:0;transform:translateY(-3px);
+    transition:opacity 0.18s ease, transform 0.2s cubic-bezier(0.34,1.2,0.64,1);
+    pointer-events:none;
+  }
+  .message.assistant:hover .message-actions {
+    opacity:1;transform:translateY(0);pointer-events:all;
+  }
+  .msg-action-btn {
+    height:24px;padding:0 10px;border-radius:8px;border:none;
+    background:rgba(255,255,255,0.75);
+    border:1px solid rgba(255,255,255,0.88);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    box-shadow:0 1px 3px rgba(0,0,0,0.06);
+    color:var(--text-muted);
+    font-size:11px;font-family:var(--font);font-weight:500;letter-spacing:-0.01em;
+    cursor:pointer;display:flex;align-items:center;gap:4px;
+    transition:color 0.15s,background 0.15s,transform 0.12s;
+  }
+  .msg-action-btn:hover { color:var(--text-secondary);background:rgba(255,255,255,0.95);transform:scale(1.03); }
+  .msg-action-btn:active { transform:scale(0.95); }
+  .msg-action-btn.branch:hover { color:var(--accent); }
+  .msg-action-btn.copied { color:var(--green) !important; }
+
+  /* ── Toast notification ── */
+  .toast {
+    position:fixed;bottom:110px;left:50%;
+    transform:translateX(-50%) translateY(6px);
+    background:rgba(28,28,30,0.84);
+    backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+    color:#fff;font-size:13px;font-weight:500;letter-spacing:-0.01em;
+    padding:9px 20px;border-radius:24px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.2);
+    pointer-events:none;opacity:0;z-index:500;
+    transition:opacity 0.22s ease, transform 0.28s cubic-bezier(0.34,1.3,0.64,1);
+  }
+  .toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
+
   /* ── Glass mixin ── */
   .glass {
     background: var(--glass-bg);
@@ -1235,10 +1295,16 @@
   <div class="input-wrap">
     <div class="input-card">
       <div class="input-bar">
+        <button class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Voice input">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <rect x="5.5" y="1" width="5" height="8" rx="2.5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M3 8a5 5 0 0010 0M8 13v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
         <textarea id="promptInput" placeholder="Ask anything…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendPrompt()" title="Send">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 13V3M3 8l5-5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+            <path d="M8 13V3M3 8l5-5 5 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
       </div>
@@ -2070,6 +2136,19 @@
     const world = document.getElementById('canvasWorld')
     world.querySelectorAll('.canvas-card,.canvas-empty').forEach(c => c.remove())
 
+    // Remove positions and connections for notes that no longer exist in the vault.
+    // Without this, deleted notes leave ghost entries that skew fitCanvasView bounds.
+    const noteSet = new Set(notes)
+    let dirty = false
+    Object.keys(canvasState.positions).forEach(k => {
+      if (!noteSet.has(k)) {
+        delete canvasState.positions[k]
+        canvasState.connections = canvasState.connections.filter(c => c.from !== k && c.to !== k)
+        dirty = true
+      }
+    })
+    if (dirty) saveCanvasState()
+
     if (!notes.length) {
       const emp = document.createElement('div')
       emp.className = 'canvas-empty'
@@ -2439,6 +2518,9 @@
         }
       }
 
+      // Final render — the rAF throttle may have skipped the very last tokens
+      bubble.innerHTML = safeHtml(fullResponse)
+
       lastResponse = fullResponse
       conversationHistory.push({ role: 'user', content: prompt })
       conversationHistory.push({ role: 'assistant', content: fullResponse })
@@ -2469,18 +2551,55 @@
 
   function appendMessage(role, text, showSave=false, scroll=true) {
     const container = document.getElementById('messages')
-    const wrap = document.createElement('div'); wrap.className=`message ${role}`
-    const label = document.createElement('div'); label.className='msg-label'; label.textContent=role==='user'?'you':'sunday'
-    const bubble = document.createElement('div'); bubble.className='bubble'
+    const wrap   = document.createElement('div'); wrap.className = `message ${role}`
+    const label  = document.createElement('div'); label.className = 'msg-label'; label.textContent = role === 'user' ? 'you' : 'sunday'
+    const bubble = document.createElement('div'); bubble.className = 'bubble'
     if (role === 'assistant') { bubble.innerHTML = safeHtml(text) } else { bubble.textContent = text }
-    wrap.appendChild(label); wrap.appendChild(bubble)
+    wrap.appendChild(label)
+    wrap.appendChild(bubble)
+
+    // Action row — copy + branch — only for assistant messages
+    if (role === 'assistant') {
+      const actions = document.createElement('div')
+      actions.className = 'message-actions'
+
+      // Copy button
+      const copyBtn = document.createElement('button')
+      copyBtn.className = 'msg-action-btn'
+      copyBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M3 8H2a1 1 0 01-1-1V2a1 1 0 011-1h5a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg> Copy`
+      copyBtn.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(text) } catch {
+          const ta = document.createElement('textarea'); ta.value = text
+          document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove()
+        }
+        copyBtn.classList.add('copied'); copyBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg> Copied`
+        setTimeout(() => { copyBtn.classList.remove('copied'); copyBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M3 8H2a1 1 0 01-1-1V2a1 1 0 011-1h5a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg> Copy` }, 1800)
+      })
+
+      // Branch button
+      const branchBtn = document.createElement('button')
+      branchBtn.className = 'msg-action-btn branch'
+      branchBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><circle cx="3" cy="2" r="1.5" stroke="currentColor" stroke-width="1.1"/><circle cx="3" cy="10" r="1.5" stroke="currentColor" stroke-width="1.1"/><circle cx="9.5" cy="5" r="1.5" stroke="currentColor" stroke-width="1.1"/><path d="M3 3.5V8.5M3 5c1.5 0 5 0 5 0" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg> Branch`
+      branchBtn.addEventListener('click', () => {
+        const allAsst = [...document.querySelectorAll('.message.assistant')]
+        const pos     = allAsst.indexOf(wrap)
+        if (pos === -1) return
+        branchFrom(pos * 2 + 1)
+      })
+
+      actions.appendChild(copyBtn)
+      actions.appendChild(branchBtn)
+      wrap.appendChild(actions)
+    }
+
     if (showSave) {
-      const row = document.createElement('div'); row.className='save-row'
-      const tagField = document.createElement('input'); tagField.className='tag-field'; tagField.placeholder='tags (e.g. idea, code)'; tagField.type='text'
-      const btn = document.createElement('button'); btn.className='save-btn'; btn.textContent='Save to Obsidian'
+      const row = document.createElement('div'); row.className = 'save-row'
+      const tagField = document.createElement('input'); tagField.className = 'tag-field'; tagField.placeholder = 'tags (e.g. idea, code)'; tagField.type = 'text'
+      const btn = document.createElement('button'); btn.className = 'save-btn'; btn.textContent = 'Save to Obsidian'
       btn.onclick = () => saveNote(tagField.value, btn)
       row.appendChild(tagField); row.appendChild(btn); wrap.appendChild(row)
     }
+
     container.appendChild(wrap)
     if (scroll) {
       const chatArea = document.getElementById('chatArea')
@@ -2744,6 +2863,130 @@
     btn.style.opacity = isHidden ? '1' : '0.5'
   }
 
+  // ── Toast ─────────────────────────────────────────────────
+  function showToast(msg, duration = 2000) {
+    let toast = document.getElementById('sundayToast')
+    if (!toast) {
+      toast = document.createElement('div')
+      toast.id = 'sundayToast'
+      toast.className = 'toast'
+      document.body.appendChild(toast)
+    }
+    toast.textContent = msg
+    toast.classList.add('show')
+    clearTimeout(toast._t)
+    toast._t = setTimeout(() => toast.classList.remove('show'), duration)
+  }
+
+  // ── Conversation branching ────────────────────────────────
+  function branchFrom(histIdx) {
+    if (!conversationHistory.length || histIdx < 0) return
+
+    // Save the current session before leaving it
+    saveConversation()
+
+    // Slice history up to and including this message
+    const branchHistory = conversationHistory.slice(0, histIdx + 1)
+    if (!branchHistory.length) return
+
+    // Reset to a fresh session seeded with the branch history
+    sessionFilename  = null
+    lastPrompt       = ''
+    lastResponse     = ''
+    conversationHistory = [...branchHistory]
+
+    // Re-render messages
+    const msgs = document.getElementById('messages')
+    msgs.innerHTML = ''
+    const welcome = document.getElementById('welcome')
+    if (welcome) welcome.remove()
+
+    branchHistory.forEach(msg => appendMessage(msg.role, msg.content, false, false))
+
+    // Save branch (auto-generates filename from first message)
+    saveConversation()
+
+    requestAnimationFrame(() => {
+      const chatArea = document.getElementById('chatArea')
+      chatArea.scrollTop = chatArea.scrollHeight
+    })
+
+    showToast('↗ Branched from here')
+    document.getElementById('promptInput').focus()
+  }
+
+  // ── Voice input ───────────────────────────────────────────
+  let _recognition    = null
+  let _isListening    = false
+  let _voiceSupported = false
+  let _voiceTimeout   = null
+
+  function initVoiceInput() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    const btn = document.getElementById('micBtn')
+    if (!SR) {
+      if (btn) btn.classList.add('unsupported')
+      return false
+    }
+    _recognition = new SR()
+    _recognition.continuous      = false
+    _recognition.interimResults  = true
+    _recognition.lang            = navigator.language || 'en-US'
+
+    _recognition.onresult = e => {
+      const transcript = Array.from(e.results).map(r => r[0].transcript).join('')
+      const isFinal    = e.results[e.results.length - 1].isFinal
+      const input      = document.getElementById('promptInput')
+      input.value      = transcript
+      autoResize(input)
+      if (isFinal) { _setListening(false); input.focus() }
+    }
+
+    _recognition.onerror = e => {
+      if (e.error !== 'aborted') console.warn('Voice:', e.error)
+      _setListening(false)
+    }
+
+    _recognition.onend = () => _setListening(false)
+
+    _voiceSupported = true
+    return true
+  }
+
+  function toggleVoiceInput() {
+    const btn = document.getElementById('micBtn')
+    if (btn?.classList.contains('unsupported')) return
+    if (_isListening) {
+      _recognition?.stop()
+      _setListening(false)
+    } else {
+      if (!_voiceSupported && !initVoiceInput()) return
+      try { _recognition.start(); _setListening(true) } catch {}
+    }
+  }
+
+  function _setListening(state) {
+    _isListening = state
+    const btn = document.getElementById('micBtn')
+    if (btn) btn.classList.toggle('listening', state)
+    clearTimeout(_voiceTimeout)
+    if (state) {
+      showToast('Listening…', 60000)
+      // Auto-stop after 30 s — prevents recognition running forever if forgotten
+      _voiceTimeout = setTimeout(() => {
+        _recognition?.stop()
+        _setListening(false)
+        showToast('Voice stopped')
+      }, 30_000)
+    } else {
+      const t = document.getElementById('sundayToast')
+      if (t?.textContent === 'Listening…') t.classList.remove('show')
+    }
+  }
+
+  // Initialise voice — mark unsupported if API absent
+  initVoiceInput()
+
   // ── Title generation ─────────────────────────────────────
   async function generateTitle() {
     if (conversationHistory.length !== 2) return
@@ -2798,6 +3041,7 @@
   let agentHistory = []
   let agentTask    = ''
   let agentCaps    = []
+  let agentStepsLog = []  // for saving completed run to vault
 
   function toggleAgent() {
     agentOpen = !agentOpen
@@ -2833,11 +3077,12 @@
     const taskVal = document.getElementById('agentTask').value.trim()
     if (!taskVal) return
     document.getElementById('agentStartBtn').disabled = true
-    agentTask    = taskVal
-    agentCaps    = document.getElementById('agentCaps').value.split(',').map(s => s.trim()).filter(Boolean)
-    agentStep    = 0
-    agentHistory = []
-    agentRunning = true
+    agentTask     = taskVal
+    agentCaps     = document.getElementById('agentCaps').value.split(',').map(s => s.trim()).filter(Boolean)
+    agentStep     = 0
+    agentHistory  = []
+    agentStepsLog = []
+    agentRunning  = true
 
     const stepsEl = document.getElementById('agentSteps')
     stepsEl.innerHTML = ''
@@ -2912,9 +3157,10 @@
   }
 
   function resetAgent() {
-    agentRunning = false
-    agentStep    = 0
-    agentHistory = []
+    agentRunning  = false
+    agentStep     = 0
+    agentHistory  = []
+    agentStepsLog = []
     document.getElementById('agentSteps').innerHTML = '<div class="agent-steps-empty">Run a task to see Sunday\'s reasoning chain</div>'
     document.getElementById('agentControls').style.display = 'none'
     document.getElementById('agentResultInput').value = ''
@@ -2931,6 +3177,7 @@
   }
 
   function appendAgentStep(data, stepNum) {
+    agentStepsLog.push({ stepNum, thought: data.thought, action: data.action, params: data.params || {} })
     const steps = document.getElementById('agentSteps')
     // Remove empty state placeholder
     const empty = steps.querySelector('.agent-steps-empty')
@@ -2958,10 +3205,45 @@
   function appendAgentDone() {
     const steps = document.getElementById('agentSteps')
     const card  = document.createElement('div')
-    card.className  = 'agent-done-card'
-    card.textContent = '✓ Task complete'
+    card.className = 'agent-done-card'
+    card.innerHTML = `
+      <div style="margin-bottom:8px;">✓ Task complete</div>
+      <button class="settings-save-btn" style="font-size:11px;height:28px;background:rgba(52,199,89,0.15);color:rgba(30,110,25,0.9);box-shadow:none;border:1px solid rgba(52,199,89,0.25);" onclick="saveAgentRun(this)">
+        Save run to vault
+      </button>
+    `
     steps.appendChild(card)
     steps.scrollTop = steps.scrollHeight
+  }
+
+  async function saveAgentRun(btn) {
+    btn.disabled = true
+    btn.textContent = 'Saving…'
+    const date = new Date().toISOString().slice(0, 10)
+    const time = new Date().toTimeString().slice(0, 5).replace(':', '-')
+    const safeTask = agentTask.slice(0, 50).replace(/[\/:*?"<>|#^[\]]/g, '').trim()
+    const filename = `${date} ${time} Agent ${safeTask}.md`
+
+    const stepsMarkdown = agentStepsLog.map(({ stepNum, thought, action, params }) => {
+      const paramLines = Object.entries(params).map(([k, v]) => `  - **${k}:** ${typeof v === 'string' ? v : JSON.stringify(v)}`).join('\n')
+      return `### Step ${stepNum}\n**Thought:** ${thought}\n\n**Action:** \`${action}\`\n${paramLines ? '\n' + paramLines : ''}`
+    }).join('\n\n')
+
+    const content = `## Task\n${agentTask}\n\n## Steps\n\n${stepsMarkdown}\n\n## Outcome\nCompleted in ${agentStepsLog.length} step${agentStepsLog.length !== 1 ? 's' : ''}.`
+
+    try {
+      const res = await fetch(`${API}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename, content, tags: 'agent' })
+      })
+      if (!res.ok) throw new Error()
+      btn.textContent = 'Saved ✓'
+      showToast('Agent run saved to vault')
+    } catch {
+      btn.disabled = false
+      btn.textContent = 'Save failed — retry'
+    }
   }
 
   function appendAgentError(msg) {

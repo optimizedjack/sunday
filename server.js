@@ -59,11 +59,10 @@ function loadVectorIndex() {
 }
 
 function saveVectorIndex() {
-  try {
-    fs.writeFileSync(INDEX_PATH, JSON.stringify({ version: 1, notes: vectorIndex }, null, 0), 'utf8')
-  } catch (e) {
-    console.error('Could not save vector index:', e.message)
-  }
+  const data = JSON.stringify({ version: 1, notes: vectorIndex }, null, 0)
+  fs.writeFile(INDEX_PATH, data, 'utf8', err => {
+    if (err) console.error('Could not save vector index:', err.message)
+  })
 }
 
 async function getEmbedding(text) {
@@ -74,13 +73,16 @@ async function getEmbedding(text) {
       body:    JSON.stringify({ model: EMBED_MODEL, prompt: text.slice(0, 2000) }),
       signal:  AbortSignal.timeout(15_000)
     })
-    if (!res.ok) { embedAvailable = false; return null }
+    // 404 = model not pulled — definitively unavailable until restart/pull
+    if (res.status === 404) { embedAvailable = false; return null }
+    // Other non-ok = transient (Ollama busy, timeout, etc.) — don't poison the flag
+    if (!res.ok) return null
     const data = await res.json()
-    if (!Array.isArray(data.embedding)) { embedAvailable = false; return null }
+    if (!Array.isArray(data.embedding)) return null
     embedAvailable = true
     return data.embedding
   } catch {
-    embedAvailable = false
+    // Network/timeout error — transient, don't permanently mark unavailable
     return null
   }
 }
@@ -146,7 +148,9 @@ function loadPins() {
   } catch { pins = [] }
 }
 function savePins() {
-  try { fs.writeFileSync(PINS_PATH, JSON.stringify(pins), 'utf8') } catch {}
+  fs.writeFile(PINS_PATH, JSON.stringify(pins), 'utf8', err => {
+    if (err) console.error('Could not save pins:', err.message)
+  })
 }
 loadPins()
 
@@ -224,6 +228,13 @@ app.post('/chat', async (req, res) => {
     }
   }
 
+  // Open the SSE stream immediately so the client sees the connection —
+  // embedding + Obsidian fetches happen after this, but the user isn't blocked waiting
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.setHeader('X-Accel-Buffering', 'no')
+
   const activeModel   = (typeof modelOverride === 'string' && modelOverride.trim()) ? modelOverride.trim() : MODEL
   const safeContext   = typeof context === 'string' ? context.slice(0, 20000) : ''
   const safeCustom    = typeof customPrompt === 'string' ? customPrompt.slice(0, 5000) : ''
@@ -292,11 +303,6 @@ app.post('/chat', async (req, res) => {
 
   const system   = `${BASE_PROMPT}${modeAddendum}${pinnedBlock}${contextBlock}`
   const messages = [...history, { role: 'user', content: prompt }]
-
-  res.setHeader('Content-Type', 'text/event-stream')
-  res.setHeader('Cache-Control', 'no-cache')
-  res.setHeader('Connection', 'keep-alive')
-  res.setHeader('X-Accel-Buffering', 'no')
 
   try {
     const response = await fetch(`${OLLAMA_URL}/api/chat`, {
@@ -368,6 +374,14 @@ app.post('/agent', async (req, res) => {
 
   if (!validateString(task, 4000)) {
     return res.status(400).json({ error: 'Invalid task' })
+  }
+
+  // Guard against huge result payloads being forwarded to Ollama
+  if (result !== null && result !== undefined) {
+    const resultStr = typeof result === 'string' ? result : JSON.stringify(result)
+    if (resultStr.length > 50_000) {
+      return res.status(400).json({ error: 'Result payload too large (max 50 KB)' })
+    }
   }
 
   if (!Array.isArray(history) || history.length > 100) {
@@ -467,9 +481,10 @@ When the task is fully complete, set "action": "done" and "done": true.`
 
 // ── POST /save ──
 app.post('/save', async (req, res) => {
-  const { prompt, response, tags } = req.body
-  if (!validateString(prompt)) return res.status(400).json({ error: 'Invalid prompt' })
-  if (!validateString(response, 100000)) return res.status(400).json({ error: 'Invalid response' })
+  // Two calling conventions:
+  //   Session save (from saveConversation): { filename, content, tags }
+  //   Manual save  (from save button):      { prompt, response, tags }
+  const { prompt, response, tags, filename: explicitFilename, content: explicitContent } = req.body
 
   const now     = new Date()
   const date    = now.toISOString().slice(0, 10)
@@ -478,20 +493,22 @@ app.post('/save', async (req, res) => {
     ? tags.split(',').map(t => t.trim().replace(/[^\w-]/g, '').slice(0, 50)).filter(Boolean).slice(0, 10)
     : ['brain']
 
-  const isFilename = prompt.endsWith('.md')
+  let filename, content
 
-  if (isFilename && !validateVaultPath(prompt)) {
-    return res.status(400).json({ error: 'Invalid filename' })
+  if (explicitFilename) {
+    // Session save — client owns the filename
+    if (!validateVaultPath(explicitFilename)) return res.status(400).json({ error: 'Invalid filename' })
+    if (!validateString(explicitContent, 500000)) return res.status(400).json({ error: 'Invalid content' })
+    filename = explicitFilename
+    content  = `---\ndate: ${date}\ntime: ${time}\ntags: [${tagList.join(', ')}]\nsource: sunday\n---\n\n${explicitContent}`
+  } else {
+    // Manual save — derive filename from prompt
+    if (!validateString(prompt)) return res.status(400).json({ error: 'Invalid prompt' })
+    if (!validateString(response, 100000)) return res.status(400).json({ error: 'Invalid response' })
+    const safeTitle = prompt.slice(0, 40).replace(/[\\/:*?"<>|#^[\]]/g, '').trim()
+    filename = VAULT_FOLDER ? `${VAULT_FOLDER}/${date} ${safeTitle}.md` : `${date} ${safeTitle}.md`
+    content  = `---\ntitle: "${safeTitle}"\ndate: ${date}\ntime: ${time}\ntags: [${tagList.join(', ')}]\nsource: sunday\n---\n\n# ${safeTitle}\n\n## Prompt\n${prompt}\n\n## Response\n${response}\n`
   }
-
-  const safeTitle = prompt.slice(0, 40).replace(/[\\/:*?"<>|#^[\]]/g, '').trim()
-  const filename  = isFilename
-    ? prompt
-    : (VAULT_FOLDER ? `${VAULT_FOLDER}/${date} ${safeTitle}.md` : `${date} ${safeTitle}.md`)
-
-  const content = isFilename
-    ? `---\ndate: ${date}\ntime: ${time}\ntags: [${tagList.join(', ')}]\nsource: sunday\n---\n\n${response}`
-    : `---\ntitle: "${safeTitle}"\ndate: ${date}\ntime: ${time}\ntags: [${tagList.join(', ')}]\nsource: sunday\n---\n\n# ${safeTitle}\n\n## Prompt\n${prompt}\n\n## Response\n${response}\n`
 
   try {
     const r = await fetch(vaultUrl(filename), {
@@ -594,19 +611,24 @@ app.get('/context', async (req, res) => {
   }
 })
 
-// ── GET /notes ──
+// ── GET /notes — paginated ──
+// Query params: limit (1–100, default 20), offset (default 0)
 app.get('/notes', async (req, res) => {
+  const limit  = Math.min(Math.max(1, parseInt(req.query.limit,  10) || 20), 100)
+  const offset = Math.max(0, parseInt(req.query.offset, 10) || 0)
   try {
     const r = await fetch(`${OBSIDIAN_URL}/vault/`, {
       headers: { 'Authorization': `Bearer ${OBSIDIAN_KEY}` },
       signal: AbortSignal.timeout(10_000),
       agent: obsidianAgent
     })
-    const data  = await r.json()
-    const files = (data.files || [])
+    const data     = await r.json()
+    const allFiles = (data.files || [])
       .filter(f => typeof f === 'string' && f.endsWith('.md'))
-      .sort().reverse().slice(0, 20)
-    res.json({ notes: files })
+      .sort().reverse()
+    const total = allFiles.length
+    const notes = allFiles.slice(offset, offset + limit)
+    res.json({ notes, total, offset, limit })
   } catch {
     res.status(500).json({ error: 'Could not reach Obsidian' })
   }
@@ -941,7 +963,16 @@ app.get('/index-status', (req, res) => {
 
 // ── POST /reindex — rebuild the entire vector index from the vault ──
 // Streams progress via SSE: { status, total, indexed, failed, done? }
+let reindexRunning = false
 app.post('/reindex', async (req, res) => {
+  if (reindexRunning) {
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.write(`data: ${JSON.stringify({ error: 'Reindex already running' })}\n\n`)
+    res.write('data: [DONE]\n\n')
+    return res.end()
+  }
+  reindexRunning = true
   res.setHeader('Content-Type', 'text/event-stream')
   res.setHeader('Cache-Control', 'no-cache')
   res.setHeader('Connection', 'keep-alive')
@@ -993,6 +1024,46 @@ app.post('/reindex', async (req, res) => {
     send({ error: err.message || 'Reindex failed' })
     res.write('data: [DONE]\n\n')
     res.end()
+  } finally {
+    reindexRunning = false
+  }
+})
+
+// ── POST /generate-title — generate a short title for a conversation ──
+app.post('/generate-title', async (req, res) => {
+  const { prompt, response, model: modelOverride = '' } = req.body
+  if (!validateString(prompt) || !validateString(response, 10000)) {
+    return res.status(400).json({ error: 'Invalid input' })
+  }
+  const activeModel = (typeof modelOverride === 'string' && modelOverride.trim()) ? modelOverride.trim() : MODEL
+  const system = 'Generate a short, specific title (4–6 words) for this conversation. Return only the title — no quotes, no punctuation at the end, no explanation.'
+  const content = `User: ${prompt.slice(0, 400)}
+
+Assistant: ${response.slice(0, 400)}`
+  try {
+    const r = await fetch(`${OLLAMA_URL}/api/chat`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        model:   activeModel,
+        system,
+        messages: [{ role: 'user', content }],
+        stream:  false,
+        options: { temperature: 0.3 }
+      }),
+      signal: AbortSignal.timeout(30_000)
+    })
+    const data  = await r.json()
+    const raw   = data.message?.content?.trim() || ''
+    const title = raw
+      .replace(/^["'""'']|["'""'']$/g, '')
+      .replace(/[\/:*?"<>|#^[\]]/g, '')
+      .trim()
+      .slice(0, 60)
+    if (!title) throw new Error('empty')
+    res.json({ title })
+  } catch {
+    res.status(500).json({ error: 'Could not generate title' })
   }
 })
 
